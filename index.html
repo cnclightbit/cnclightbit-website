@@ -1443,7 +1443,7 @@ const GALLERY = [
   { img:"boombox-green-6x9",  title:"Hard-case speaker in OD green", text:"Dual 6×9 speakers mounted in the lid." },
   { img:"business-card",      title:"Metal business card",          text:"Laser-marked brushed metal business card." },
   { img:"living-hinge-card",  title:"Living-hinge wood card",       text:"Laser-cut flex pattern lets solid wood fold like a book." },
-  { img:"oak-routed-part",    title:"CNC-routed oak part",          text:"Stepped, multi-depth routing in solid oak with a mesh insert." },
+  { img:"oak-routed-part",    title:"Whiskey smoker",               text:"CNC-routed oak cocktail smoker top with a stainless mesh screen for the wood chips." },
 ];
 $("#galleryGrid").innerHTML = GALLERY.map((g,i)=>`<button type="button" class="g-item" data-g="${i}"><figure style="margin:0"><img src="gallery/${g.img}-thumb.webp" alt="${esc(g.title)}" loading="lazy"><figcaption><b>${esc(g.title)}</b>${esc(g.text)}</figcaption></figure></button>`).join("");
 let gIdx = 0, gLast = null;
