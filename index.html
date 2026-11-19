@@ -295,6 +295,12 @@
   .logo-btn{display:flex;align-items:center;gap:10px;text-align:left;padding:8px 12px}
   .logo-btn img{width:36px;height:36px}
   .logo-btn span{font-size:.85rem}
+  .design-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .design-btn img{width:44px;height:44px;object-fit:contain;background:#737373;border-radius:6px;padding:2px}
+  .tee-pick-card{display:grid;grid-template-columns:1.2fr 1fr}
+  .tee-pick-art{background:#737373;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;align-items:center;padding:18px 12px}
+  .tee-pick-art svg{width:100%;height:auto;display:block}
+  @media (max-width:820px){ .tee-pick-card{grid-template-columns:1fr} .tee-pick-art{grid-template-columns:repeat(3,1fr)} .tee-pick-art>:nth-child(n+4){display:none} }
   .modal-art-wrap{background:#737373;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:16px 16px 12px}
   .views{display:flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px;gap:3px}
   .views button{background:none;border:0;color:var(--muted);padding:6px 18px;border-radius:999px;font-weight:600;font-size:.88rem}
@@ -339,7 +345,6 @@
     <ul class="nav-links" id="navLinks">
       <li><a href="#products">Services</a></li>
       <li><a href="#tees">T-Shirts</a></li>
-      <li><a href="#longsleeve">Long Sleeve</a></li>
       <li><a href="#knives">Knives</a></li>
       <li><a href="#boards">Cutting Boards</a></li>
       <li><a href="#how">How it works</a></li>
@@ -472,25 +477,23 @@
       <div class="sec-head">
         <div>
           <span class="eyebrow">Heat-pressed · Comfort Colors</span>
-          <h2>Short-sleeve tees</h2>
+          <h2>Custom t-shirts</h2>
         </div>
-        <p>Every design is printed large on the back of a Comfort Colors tee. Pick your style (1717 or 6030 pocket tee), color, size and front left-chest logo, then send your order request.</p>
+        <p>Pick a back design, short or long sleeve, color, size and a front left-chest logo. Every design is printed large on the back of a Comfort Colors tee.</p>
       </div>
-      <div class="grid" id="teeGrid"></div>
-    </div>
-  </section>
-
-  <!-- LONG SLEEVE -->
-  <section id="longsleeve">
-    <div class="wrap">
-      <div class="sec-head">
-        <div>
-          <span class="eyebrow">Heat-pressed · Comfort Colors</span>
-          <h2>Long-sleeve tees</h2>
+      <article class="card tee-pick-card">
+        <div class="tee-pick-art" id="teePickArt" aria-hidden="true"></div>
+        <div class="card-body">
+          <span class="tag">Short or long sleeve · back print</span>
+          <h3>Design your tee</h3>
+          <p>Choose from <span id="teeDesignCount"></span> lake-life back designs on Comfort Colors 1717 or 6030 pocket tees, or 6014 and 4410 pocket long sleeves with our fish stack printed down the left sleeve (+<span id="teeLsAdd"></span>).</p>
+          <div class="swatches-mini" id="teePickSwatches"></div>
+          <div class="card-foot">
+            <span class="price" id="teeFrom"></span>
+            <button class="btn" id="openTeeDesigner">Design yours</button>
+          </div>
         </div>
-        <p>The same back designs on Comfort Colors 6014 or 4410 pocket long sleeves, with our lake-life fish stack printed down the left sleeve. Long sleeves are $10 more than short sleeves in each size.</p>
-      </div>
-      <div class="grid" id="lsGrid"></div>
+      </article>
     </div>
   </section>
 
@@ -639,6 +642,9 @@
       <span class="tag" id="mTag">T-shirt design</span>
       <h3 id="mTitle"></h3>
       <p class="desc" id="mDesc"></p>
+
+      <div class="opt-label">Back design</div>
+      <div class="sizes design-grid" id="mDesigns" role="radiogroup" aria-label="Back design"></div>
 
       <div class="opt-label">Comfort Colors style</div>
       <div class="sizes style-grid" id="mStyles" role="radiogroup" aria-label="Shirt style"></div>
@@ -1105,32 +1111,21 @@ $("#c-interest").innerHTML = [...PRODUCTS.map(p=>p.name), "Etched pocket knife",
   .map(n=>`<option>${esc(n)}</option>`).join("");
 $("#c-interest").value = "Something custom";
 
-/* ---------- Render tees ---------- */
-const teeCards = style => TEES.map((t,i)=>`
-  <article class="card tee-card">
-    <div class="card-img">${teeSVG(t, CC_COLORS[DEFAULT_COLOR], {style, view:"back"})}</div>
-    <div class="card-body">
-      <span class="tag">${STYLES[style].long ? "Long sleeve" : "Short sleeve"} · back print</span>
-      <h3>${esc(t.name)}</h3>
-      <p>${esc(t.desc)}</p>
-      <div class="swatches-mini">${["Pepper","Blue Jean","Chalky Mint","Butter","Brick","Ivory"].map(c=>`<span style="background:${CC_COLORS[c]}" title="${c}"></span>`).join("")}<em>+ many more</em></div>
-      <div class="card-foot">
-        <span class="price">From ${money(FROM_PRICE + (STYLES[style].long ? LONG_SLEEVE_ADD : 0))}</span>
-        <button class="btn" data-tee="${i}" data-style="${style}">Choose options</button>
-      </div>
-    </div>
-  </article>`).join("");
-$("#teeGrid").innerHTML = teeCards("1717");
-$("#lsGrid").innerHTML = teeCards("6014");
+/* ---------- T-shirt card: one "Design yours" button; the back design is picked inside ---------- */
+$("#teePickArt").innerHTML = TEES.map(t=>teeSVG(t, CC_COLORS[DEFAULT_COLOR], {style:"1717", view:"back"})).join("");
+$("#teeDesignCount").textContent = TEES.length;
+$("#teeLsAdd").textContent = money(LONG_SLEEVE_ADD);
+$("#teePickSwatches").innerHTML = ["Pepper","Blue Jean","Chalky Mint","Butter","Brick","Ivory"].map(c=>`<span style="background:${CC_COLORS[c]}" title="${c}"></span>`).join("") + "<em>+ many more</em>";
+$("#teeFrom").textContent = "From " + money(FROM_PRICE);
+$("#openTeeDesigner").addEventListener("click", ()=> openTee(0, "1717"));
 
 /* ---------- Tee modal ---------- */
 let cur = null, selStyle = "1717", selColor = DEFAULT_COLOR, selSize = null, selLogo = FRONT_LOGOS[0].id, selView = "back", lastFocus = null;
 function openTee(i, style){
   cur = TEES[i]; selStyle = style || "1717"; selColor = DEFAULT_COLOR; selSize = null;
   selLogo = FRONT_LOGOS[0].id; selView = "back"; lastFocus = document.activeElement;
-  $("#mTitle").textContent = cur.name;
-  $("#mDesc").textContent = cur.desc;
-  renderStyles(); renderLogos(); renderSwatches(); renderSizes();
+  showDesign();
+  renderDesigns(); renderStyles(); renderLogos(); renderSwatches(); renderSizes();
   $("#qInput").value = 1;
   $("#mSizeNote").textContent = "Pick one";
   $("#mColorNote").textContent = "";
@@ -1141,6 +1136,14 @@ function openTee(i, style){
   document.body.style.overflow="hidden";
   $("#mClose").focus();
 }
+function showDesign(){ $("#mTitle").textContent = cur.name; $("#mDesc").textContent = cur.desc; }
+function renderDesigns(){
+  $("#mDesigns").innerHTML = TEES.map((t,i)=>`<button type="button" class="size logo-btn design-btn" role="radio" aria-checked="${t===cur}" data-d="${i}"><img src="${t.img}" alt=""><span>${esc(t.name)}</span></button>`).join("");
+}
+$("#mDesigns").addEventListener("click", e=>{
+  const b=e.target.closest("[data-d]"); if(!b) return;
+  cur = TEES[+b.dataset.d]; showDesign(); renderDesigns(); setView("back");
+});
 function renderStyles(){
   $("#mStyles").innerHTML = STYLE_ORDER.map(k=>[k,STYLES[k]]).map(([k,s])=>`<button type="button" class="size style-btn" role="radio" aria-checked="${k===selStyle}" data-st="${k}"><b>${s.label}</b><small>${s.name}${s.long ? " · +"+money(LONG_SLEEVE_ADD) : ""}</small></button>`).join("");
   $("#mTag").textContent = `Comfort Colors ${STYLES[selStyle].label} · ${STYLES[selStyle].name}`;
@@ -1220,7 +1223,6 @@ function updateArt(){
   $("#mArt").innerHTML = teeSVG(cur, CC_COLORS[selColor], {style:selStyle, view:selView, logo:selLogo});
   $("#mColorName").textContent = selColor;
 }
-for (const g of ["#teeGrid","#lsGrid"]) $(g).addEventListener("click", e=>{ const b=e.target.closest("[data-tee]"); if(b) openTee(+b.dataset.tee, b.dataset.style); });
 $("#mClose").addEventListener("click", closeTee);
 $("#teeModal").addEventListener("click", e=>{ if(e.target.id==="teeModal") closeTee(); });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && $("#teeModal").classList.contains("open")) closeTee(); });
