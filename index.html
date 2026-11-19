@@ -2022,10 +2022,23 @@ $("#cartForm").addEventListener("submit", async e=>{
   btn.disabled = true;
   msg.className = "form-msg"; msg.textContent = "";
   // keep the upload under Netlify's 8 MB per-request limit by shrinking very large images
-  const totalBytes = Object.values(files).reduce((s,f)=>s+f.size,0);
+  const totalBytes = Object.values(files).reduce((s,f)=>s+f.size,0), resized = [];
   if (totalBytes > 7*1024*1024) {
     btn.textContent = "Preparing images…";
-    for (const key of Object.keys(files)) files[key] = await shrinkImage(files[key], 2400);
+    // shrink the biggest images first, and only as many as needed to get under the limit
+    const total = ()=> Object.values(files).reduce((s,f)=>s+f.size,0);
+    const orig = {};   // original pixel size of each file we shrink, for the note in the email
+    for (const maxSide of [2400, 1800, 1400, 1000]) {
+      for (const key of Object.keys(files).sort((a,b)=>files[b].size - files[a].size)) {
+        if (total() <= 7*1024*1024) break;
+        shrinkImage.last = "";
+        const before = files[key];
+        files[key] = await shrinkImage(before, maxSide);
+        if (shrinkImage.last) { const [from, to] = shrinkImage.last.split(" → "); orig[key] = orig[key] || { name: before.name, from }; orig[key].to = to; }
+      }
+      if (total() <= 7*1024*1024) break;
+    }
+    for (const [key, o] of Object.entries(orig)) resized.push(`${key} (${o.name}): ${o.from} → ${o.to}`);
   }
   btn.textContent = "Sending…";
   try {
@@ -2039,7 +2052,7 @@ $("#cartForm").addEventListener("submit", async e=>{
       order_total: money(tees + kn*knifeEach(kn) + boards + shipAmt) + (shipAmt ? ` including ${money(shipAmt)} shipping` : " (local pickup)"),
       email, name: name || "(not given)", phone: form.phone.value.trim() || "(not given)",
       delivery: d["Delivery"] || "", ship_to: d["Ship to"] || "", address: d["Address"] || "", city_state_zip: d["City, State ZIP"] || "",
-      notes: form.message.value.trim() || "(none)" }, files);
+      notes: (form.message.value.trim() || "(none)") + (resized.length ? "\n\nNOTE: to fit the 8 MB upload limit, this artwork was resized. Ask the customer for the full-size file if you need it for engraving:\n" + resized.join("\n") : "") }, files);
     CART.length = 0; renderCart();
     $("#cartItems").innerHTML = `<div class="cart-empty ok">✓ Thanks${name ? ", "+esc(name.split(" ")[0]) : ""}! We got your order and will email ${esc(email)} with the details of this order.</div>`;
     form.reset();
@@ -2054,6 +2067,7 @@ async function shrinkImage(file, maxSide){
   try {
     const bmp = await createImageBitmap(file);
     const s = Math.min(1, maxSide / Math.max(bmp.width, bmp.height)); if (s >= 1) return file;
+    shrinkImage.last = `${bmp.width}×${bmp.height} px → ${Math.round(bmp.width*s)}×${Math.round(bmp.height*s)} px`;
     const c = document.createElement("canvas"); c.width = Math.round(bmp.width*s); c.height = Math.round(bmp.height*s);
     c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
     const type = file.type === "image/jpeg" ? "image/jpeg" : "image/png";
