@@ -47,6 +47,16 @@
   .nav-links{gap:18px}.nav-links a{font-size:.92rem}
   .nav-ctas .btn,.nav-ctas .cart-btn{white-space:nowrap}
   .menu-btn{display:none;background:none;border:0;color:var(--text);font-size:1.6rem}
+  /* "Design Your Own" drop-down */
+  .has-sub{position:relative}
+  .sub-btn{background:none;border:0;padding:0;color:var(--muted);font:inherit;font-weight:500;font-size:.92rem;white-space:nowrap;cursor:pointer}
+  .sub-btn:hover,.has-sub.open .sub-btn{color:var(--text)}
+  .sub-btn span{font-size:.75em;margin-left:2px}
+  .sub{display:none;position:absolute;top:calc(100% + 14px);left:-14px;min-width:190px;list-style:none;margin:0;padding:8px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 28px rgba(0,0,0,.4);z-index:60}
+  .sub::before{content:"";position:absolute;left:0;right:0;top:-16px;height:16px}
+  .sub a{display:block;padding:9px 12px;border-radius:8px}
+  .sub a:hover{background:var(--card);color:var(--text)}
+  .has-sub:hover .sub,.has-sub:focus-within .sub,.has-sub.open .sub{display:block}
   /* below 1180px the menu folds into the ☰ button so the links never wrap onto two lines */
   @media (max-width:1180px){
     .nav-links{display:none;position:absolute;top:66px;left:0;right:0;background:var(--bg);flex-direction:column;gap:18px;padding:20px 22px;border-bottom:1px solid var(--line);z-index:50}
@@ -55,7 +65,31 @@
     .menu-btn{display:block}
     .nav-links{margin:0}
     .nav-ctas{margin-left:auto;margin-right:14px}
+    .sub-btn{font-size:1rem;cursor:default}
+    .sub-btn span{display:none}
+    .sub{display:block;position:static;background:none;border:0;box-shadow:none;padding:10px 0 0 14px;min-width:0}
+    .sub::before{display:none}
+    .sub a{padding:7px 0}
+    .sub a:hover{background:none}
   }
+  /* Gallery */
+  .gallery{columns:3 260px;column-gap:16px}
+  .g-item{break-inside:avoid;margin:0 0 16px;display:block;width:100%;padding:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);cursor:zoom-in;text-align:left;color:inherit;font:inherit}
+  .g-item img{width:100%;height:auto;display:block;transition:transform .3s}
+  .g-item:hover img{transform:scale(1.03)}
+  .g-item figcaption{padding:10px 14px 12px;font-size:.88rem;color:var(--muted)}
+  .g-item figcaption b{display:block;color:var(--text);font-weight:600;font-size:.95rem;margin-bottom:2px}
+  .lightbox{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;flex-direction:column;padding:20px}
+  .lightbox.open{display:flex}
+  .lightbox img{max-width:min(1400px,94vw);max-height:80vh;object-fit:contain;border-radius:10px}
+  .lightbox p{color:#eee;margin:14px 0 0;text-align:center;max-width:720px}
+  .lightbox p b{color:var(--accent)}
+  .lb-btn{position:absolute;background:rgba(255,255,255,.12);border:0;color:#fff;width:48px;height:48px;border-radius:50%;font-size:1.5rem;cursor:pointer}
+  .lb-btn:hover{background:rgba(255,255,255,.25)}
+  .lb-close{top:16px;right:16px}
+  .lb-prev{left:16px;top:50%;transform:translateY(-50%)}
+  .lb-next{right:16px;top:50%;transform:translateY(-50%)}
+  @media (max-width:600px){ .lb-prev,.lb-next{top:auto;bottom:16px;transform:none} }
 
   /* Hero */
   .hero{position:relative;overflow:hidden;padding:96px 0 84px}
@@ -345,9 +379,15 @@
     </a>
     <ul class="nav-links" id="navLinks">
       <li><a href="#products">Services</a></li>
-      <li><a href="#tees">T-Shirts</a></li>
-      <li><a href="#knives">Knives</a></li>
-      <li><a href="#boards">Cutting Boards</a></li>
+      <li class="has-sub">
+        <button type="button" class="sub-btn" id="subBtn" aria-expanded="false" aria-controls="subMenu">Design Your Own <span aria-hidden="true">▾</span></button>
+        <ul class="sub" id="subMenu">
+          <li><a href="#tees">T-Shirts</a></li>
+          <li><a href="#knives">Etched Knives</a></li>
+          <li><a href="#boards">Cutting Boards</a></li>
+        </ul>
+      </li>
+      <li><a href="#gallery">Gallery</a></li>
       <li><a href="#how">How it works</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
@@ -548,6 +588,20 @@
     </div>
   </section>
 
+  <!-- GALLERY -->
+  <section id="gallery">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <span class="eyebrow">Made in our shop</span>
+          <h2>Gallery</h2>
+        </div>
+        <p>A few recent projects: laser engraving and marking, plasma-cut metal, 3D relief carving, epoxy inlay, CNC-cut parts and custom speaker builds. Tap any photo to see it larger.</p>
+      </div>
+      <div class="gallery" id="galleryGrid"></div>
+    </div>
+  </section>
+
   <!-- HOW -->
   <section id="how">
     <div class="wrap">
@@ -691,6 +745,15 @@
   <input name="bot-field"><input name="subject"><input name="interested_in">
   <input name="email"><input name="name"><input name="phone"><textarea name="message"></textarea>
 </form>
+
+<!-- GALLERY LIGHTBOX -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Gallery photo">
+  <button type="button" class="lb-btn lb-close" id="lbClose" aria-label="Close">✕</button>
+  <button type="button" class="lb-btn lb-prev" id="lbPrev" aria-label="Previous photo">‹</button>
+  <img id="lbImg" alt="">
+  <p id="lbCap"></p>
+  <button type="button" class="lb-btn lb-next" id="lbNext" aria-label="Next photo">›</button>
+</div>
 
 <!-- CART -->
 <div class="cart-overlay" id="cartOverlay" hidden></div>
@@ -1354,7 +1417,49 @@ $("#menuBtn").addEventListener("click", ()=>{
   const open = $("#navLinks").classList.toggle("open");
   $("#menuBtn").setAttribute("aria-expanded", open);
 });
-$("#navLinks").addEventListener("click", e=>{ if(e.target.tagName==="A") $("#navLinks").classList.remove("open"); });
+$("#navLinks").addEventListener("click", e=>{ if(e.target.tagName==="A"){ $("#navLinks").classList.remove("open"); closeSub(); e.target.blur(); } });
+
+/* "Design Your Own" drop-down: opens on hover (desktop) or tap */
+const subLi = $("#subBtn").parentElement;
+function closeSub(){ subLi.classList.remove("open"); $("#subBtn").setAttribute("aria-expanded","false"); }
+$("#subBtn").addEventListener("click", e=>{ e.stopPropagation(); const o = subLi.classList.toggle("open"); $("#subBtn").setAttribute("aria-expanded", o); });
+document.addEventListener("click", e=>{ if(!subLi.contains(e.target)) closeSub(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeSub(); });
+
+/* =====================================================================
+   GALLERY — to add a photo, put a 1600px .webp and a 640px "-thumb" .webp
+   in the gallery folder and add a line here.
+   ===================================================================== */
+const GALLERY = [
+  { img:"big-eight-sign",     title:"Big Eight Hunting Camp sign",  text:"CNC-carved butcher block with color epoxy inlay." },
+  { img:"jw-pizza-sign",      title:"J.W. Pizza Pies sign",         text:"Plasma-cut steel lettering with a laser-engraved eagle and flag on a swirl-finished panel." },
+  { img:"deer-relief",        title:"3D relief carving",            text:"Deer in the woods, carved on the CNC router in 3D." },
+  { img:"mathis-board",       title:"Monogram cutting board",       text:"Laser-engraved bamboo with a family monogram and wreath." },
+  { img:"photo-caddy",        title:"Photo-engraved caddy",         text:"A photo laser-engraved onto a bamboo utensil caddy." },
+  { img:"dash-panels",        title:"Reproduction dash panels",     text:"New wood dash panels CNC-cut from the original (center)." },
+  { img:"boombox-orange-sub", title:"Hard-case Bluetooth speaker",  text:"Custom build with a Kicker subwoofer and 3D-printed ports." },
+  { img:"boombox-orange-6x9", title:"Hard-case Bluetooth speaker",  text:"The other side: a pair of 6×9 speakers." },
+  { img:"boombox-green-sub",  title:"Hard-case speaker in OD green", text:"Same build in green, with black 3D-printed ports." },
+  { img:"boombox-green-6x9",  title:"Hard-case speaker in OD green", text:"Dual 6×9 speakers mounted in the lid." },
+  { img:"business-card",      title:"Metal business card",          text:"Laser-marked brushed metal business card." },
+  { img:"living-hinge-card",  title:"Living-hinge wood card",       text:"Laser-cut flex pattern lets solid wood fold like a book." },
+  { img:"oak-routed-part",    title:"CNC-routed oak part",          text:"Stepped, multi-depth routing in solid oak with a mesh insert." },
+];
+$("#galleryGrid").innerHTML = GALLERY.map((g,i)=>`<button type="button" class="g-item" data-g="${i}"><figure style="margin:0"><img src="gallery/${g.img}-thumb.webp" alt="${esc(g.title)}" loading="lazy"><figcaption><b>${esc(g.title)}</b>${esc(g.text)}</figcaption></figure></button>`).join("");
+let gIdx = 0, gLast = null;
+function showG(i){ gIdx = (i + GALLERY.length) % GALLERY.length; const g = GALLERY[gIdx];
+  $("#lbImg").src = `gallery/${g.img}.webp`; $("#lbImg").alt = g.title;
+  $("#lbCap").innerHTML = `<b>${esc(g.title)}</b> · ${esc(g.text)}`; }
+function openG(i){ gLast = document.activeElement; showG(i); $("#lightbox").classList.add("open"); document.body.style.overflow="hidden"; $("#lbClose").focus(); }
+function closeG(){ $("#lightbox").classList.remove("open"); document.body.style.overflow=""; if(gLast) gLast.focus(); }
+$("#galleryGrid").addEventListener("click", e=>{ const b=e.target.closest("[data-g]"); if(b) openG(+b.dataset.g); });
+$("#lbClose").onclick = closeG; $("#lbPrev").onclick = ()=>showG(gIdx-1); $("#lbNext").onclick = ()=>showG(gIdx+1);
+$("#lightbox").addEventListener("click", e=>{ if(e.target.id==="lightbox") closeG(); });
+document.addEventListener("keydown", e=>{ if(!$("#lightbox").classList.contains("open")) return;
+  if(e.key==="Escape") closeG(); else if(e.key==="ArrowLeft") showG(gIdx-1); else if(e.key==="ArrowRight") showG(gIdx+1); });
+let gTouch = null;
+$("#lightbox").addEventListener("touchstart", e=>{ gTouch = e.touches[0].clientX; }, {passive:true});
+$("#lightbox").addEventListener("touchend", e=>{ if(gTouch==null) return; const dx = e.changedTouches[0].clientX - gTouch; if(Math.abs(dx) > 50) showG(gIdx + (dx < 0 ? 1 : -1)); gTouch = null; });
 
 renderFilters(); renderProducts();
 
