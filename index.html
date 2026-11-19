@@ -527,7 +527,7 @@
         <div class="card-body">
           <span class="tag">Short or long sleeve · back print</span>
           <h3>Design your tee</h3>
-          <p>Choose from <span id="teeDesignCount"></span> lake-life back designs on Comfort Colors 1717 or 6030 pocket tees, or 6014 long sleeves (+<span id="teeLsAdd"></span>) and 4410 pocket long sleeves (+<span id="teePocketLsAdd"></span>) with our fish stack printed down the left sleeve.</p>
+          <p>Choose from <span id="teeDesignCount"></span> lake-life back designs on Comfort Colors 1717 or 6030 pocket tees, or 6014 long sleeves (+<span id="teeLsAdd"></span>) and 4410 pocket long sleeves (+<span id="teePocketLsAdd"></span>), with your choice of sleeve graphic.</p>
           <div class="swatches-mini" id="teePickSwatches"></div>
           <div class="card-foot">
             <span class="price" id="teeFrom"></span>
@@ -703,6 +703,11 @@
 
       <div class="opt-label">Comfort Colors style</div>
       <div class="sizes style-grid" id="mStyles" role="radiogroup" aria-label="Shirt style"></div>
+
+      <div id="mSleeveWrap" hidden>
+        <div class="opt-label">Sleeve graphic <em>left sleeve</em></div>
+        <div class="sizes" id="mSleeves" role="radiogroup" aria-label="Sleeve graphic"></div>
+      </div>
 
       <div class="opt-label">Pick Front Logo <em>left chest</em></div>
       <div class="sizes" id="mLogos" role="radiogroup" aria-label="Front logo"></div>
@@ -1063,7 +1068,12 @@ const FROM_PRICE = Math.min(...Object.values(SIZE_PRICES));
 /* Extra charge over the short-sleeve price, in every size. Styles not listed cost the base price. */
 const STYLE_ADD = { "6014":10, "4410":15 };   // 6014 long sleeve +$10 · 4410 long sleeve with pocket +$15
 const LONG_SLEEVE_ADD = Math.min(...Object.values(STYLE_ADD));
-const SLEEVE_ART = "designs/sleeve.webp";   // printed on the wearer's left sleeve
+/* SLEEVE GRAPHICS — long sleeves only, printed down the wearer's left sleeve. Add new ones here
+   (a tall, narrow transparent image works best). Keep "No sleeve graphic" last. */
+const SLEEVE_ARTS = [
+  { id:"fish-stack", name:"Lake-life fish stack", img:"designs/sleeve.webp" },
+  { id:"none",       name:"No sleeve graphic" },
+];
 const styleAdd = style => STYLE_ADD[style] || 0;
 const priceFor = (size, style) => SIZE_PRICES[size] + styleAdd(style);
 const STYLE_ORDER = ["1717","6030","6014","4410"];   // short sleeves first, then long sleeves
@@ -1101,8 +1111,9 @@ const ICONS = {
 
 /* ---------- Tee artwork (recolors with chosen shirt) ---------- */
 function teeSVG(tee, shirtHex, opts){
-  const o = Object.assign({ style:"1717", view:"back", logo:"none" }, opts);
+  const o = Object.assign({ style:"1717", view:"back", logo:"none", sleeve:SLEEVE_ARTS[0].id }, opts);
   const st = STYLES[o.style];
+  const sl = SLEEVE_ARTS.find(x => x.id === o.sleeve), sleeveImg = st.long && sl && sl.img ? sl.img : "";
   const light = isLight(shirtHex);
   const stroke = light ? "rgba(0,0,0,.2)" : "rgba(255,255,255,.16)";
   const seam = light ? "rgba(0,0,0,.14)" : "rgba(255,255,255,.12)";
@@ -1115,14 +1126,14 @@ function teeSVG(tee, shirtHex, opts){
   if (o.view === "back") {
     inner += `<image href="${tee.img}" x="90" y="64" width="120" height="186" preserveAspectRatio="xMidYMid meet"/>`;
     // wearer's left sleeve is on the viewer's left from the back
-    if (st.long) inner += `<g transform="translate(47.5 184) rotate(10.7)"><image href="${SLEEVE_ART}" x="-18" y="-70" width="36" height="140" preserveAspectRatio="xMidYMid meet"/></g>`;
+    if (sleeveImg) inner += `<g transform="translate(47.5 184) rotate(10.7)"><image href="${sleeveImg}" x="-18" y="-70" width="36" height="140" preserveAspectRatio="xMidYMid meet"/></g>`;
   } else {
     // wearer's left chest is on the viewer's right from the front
     if (st.pocket) inner += `<path d="M166 104h38v40q0 5-5 5h-28q-5 0-5-5z" fill="${shirtHex}" stroke="${stroke}" stroke-width="1.6"/><path d="M166 109h38" stroke="${seam}" stroke-width="1.2"/>`;
     const lg = FRONT_LOGOS.find(l => l.id === o.logo);
     // same size and spot on every style (on pocket styles it sits on the pocket)
     if (lg && lg.img) inner += `<image href="${lg.img}" x="169" y="112" width="32" height="32"/>`;
-    if (st.long) inner += `<g transform="translate(252.5 184) rotate(-10.7)"><image href="${SLEEVE_ART}" x="-18" y="-70" width="36" height="140" preserveAspectRatio="xMidYMid meet"/></g>`;
+    if (sleeveImg) inner += `<g transform="translate(252.5 184) rotate(-10.7)"><image href="${sleeveImg}" x="-18" y="-70" width="36" height="140" preserveAspectRatio="xMidYMid meet"/></g>`;
   }
   const cuffs = st.long ? `<path d="M19 254l30 8M281 254l-30 8" stroke="${stroke}" stroke-width="2"/>` : "";
   return `<svg viewBox="0 0 300 300" role="img" aria-label="${esc(st.name)} shirt, ${o.view} view">
@@ -1181,12 +1192,13 @@ $("#teeFrom").textContent = "From " + money(FROM_PRICE);
 $("#openTeeDesigner").addEventListener("click", ()=> openTee(0, "1717"));
 
 /* ---------- Tee modal ---------- */
+let selSleeve = SLEEVE_ARTS[0].id;
 let cur = null, selStyle = "1717", selColor = DEFAULT_COLOR, selSize = null, selLogo = FRONT_LOGOS[0].id, selView = "back", lastFocus = null;
 function openTee(i, style){
   cur = TEES[i]; selStyle = style || "1717"; selColor = DEFAULT_COLOR; selSize = null;
-  selLogo = FRONT_LOGOS[0].id; selView = "back"; lastFocus = document.activeElement;
+  selLogo = FRONT_LOGOS[0].id; selSleeve = SLEEVE_ARTS[0].id; selView = "back"; lastFocus = document.activeElement;
   showDesign();
-  renderDesigns(); renderStyles(); renderLogos(); renderSwatches(); renderSizes();
+  renderDesigns(); renderStyles(); renderSleeves(); renderLogos(); renderSwatches(); renderSizes();
   $("#qInput").value = 1;
   $("#mSizeNote").textContent = "Pick one";
   $("#mColorNote").textContent = "";
@@ -1197,6 +1209,14 @@ function openTee(i, style){
   document.body.style.overflow="hidden";
   $("#mClose").focus();
 }
+function renderSleeves(){
+  $("#mSleeveWrap").hidden = !STYLES[selStyle].long;
+  $("#mSleeves").innerHTML = SLEEVE_ARTS.map(x=>`<button type="button" class="size logo-btn" role="radio" aria-checked="${x.id===selSleeve}" data-sl="${x.id}">${x.img ? `<img src="${x.img}" alt="" style="object-fit:contain">` : ""}<span>${esc(x.name)}</span></button>`).join("");
+}
+$("#mSleeves").addEventListener("click", e=>{
+  const b=e.target.closest("[data-sl]"); if(!b) return;
+  selSleeve=b.dataset.sl; renderSleeves(); updateArt();
+});
 function showDesign(){ $("#mTitle").textContent = cur.name; $("#mDesc").textContent = cur.desc; }
 function renderDesigns(){
   $("#mDesigns").innerHTML = TEES.map((t,i)=>`<button type="button" class="size logo-btn design-btn" role="radio" aria-checked="${t===cur}" data-d="${i}"><img src="${t.img}" alt=""><span>${esc(t.name)}</span></button>`).join("");
@@ -1232,7 +1252,7 @@ $("#mStyles").addEventListener("click", e=>{
     $("#mColorNote").textContent = `${selColor} isn't made in the ${selStyle}, so we switched to ${DEFAULT_COLOR}.`;
     selColor = DEFAULT_COLOR;
   } else $("#mColorNote").textContent = "";
-  renderStyles(); renderSwatches(); renderSizes(); updateArt(); updateTotal();
+  renderStyles(); renderSleeves(); renderSwatches(); renderSizes(); updateArt(); updateTotal();
 });
 $("#mLogos").addEventListener("click", e=>{
   const b=e.target.closest("[data-lg]"); if(!b) return;
@@ -1281,7 +1301,7 @@ function closeTee(){
   if(lastFocus) lastFocus.focus();
 }
 function updateArt(){
-  $("#mArt").innerHTML = teeSVG(cur, CC_COLORS[selColor], {style:selStyle, view:selView, logo:selLogo});
+  $("#mArt").innerHTML = teeSVG(cur, CC_COLORS[selColor], {style:selStyle, view:selView, logo:selLogo, sleeve:selSleeve});
   $("#mColorName").textContent = selColor;
 }
 $("#mClose").addEventListener("click", closeTee);
@@ -1407,7 +1427,8 @@ $("#teeForm").addEventListener("submit", e=>{
   if(!selSize){ msg.className="form-msg err"; msg.textContent="Please choose a size."; return; }
   cartAdd({ kind:"tee", design:cur.name, style:selStyle, color:selColor, size:selSize,
             logo:FRONT_LOGOS.find(l=>l.id===selLogo).name, qty:clampQty($("#qInput").value),
-            thumb: teeSVG(cur, CC_COLORS[selColor], {style:selStyle, view:"back"}) });
+            sleeve: STYLES[selStyle].long ? SLEEVE_ARTS.find(x=>x.id===selSleeve).name : "",
+            thumb: teeSVG(cur, CC_COLORS[selColor], {style:selStyle, view:"back", sleeve:selSleeve}) });
   addedMsg(msg, `${cur.name} (${selSize}, ${selColor}) added to your cart.`);
 });
 $("#contactForm").addEventListener("submit", e=>{
@@ -1904,7 +1925,7 @@ function itemLines(it){
   if (it.kind === "tee") return [
     `<b>${esc(it.design)}</b> ${STYLES[it.style].long ? "long-sleeve" : "tee"}`,
     `Comfort Colors ${it.style} · ${esc(it.color)} · ${it.size}`,
-    `Front logo: ${esc(it.logo)}`];
+    `Front logo: ${esc(it.logo)}`].concat(it.sleeve ? [`Sleeve: ${esc(it.sleeve)}`] : []);
   return [
     `<b>Etched pocket knife</b>`,
     it.clipName ? `Clip: “${esc(it.clipName)}” · ${esc(it.font)}` : "Clip: (no name)",
@@ -1981,7 +2002,7 @@ $("#cartForm").addEventListener("submit", async e=>{
   CART.forEach((it, n)=>{
     const each = itemPrice(it), no = n+1;
     if (it.kind === "tee") {
-      lines.push(`${no}. T-SHIRT — back design: ${it.design} | ${styleText(it.style)}${STYLES[it.style].long ? " (fish-stack sleeve print)" : ""} | color: ${it.color} | size: ${it.size} | front logo: ${it.logo} | qty ${it.qty} × ${money(each)} = ${money(each*it.qty)}`);
+      lines.push(`${no}. T-SHIRT — back design: ${it.design} | ${styleText(it.style)}${it.sleeve ? " | sleeve graphic: " + it.sleeve : ""} | color: ${it.color} | size: ${it.size} | front logo: ${it.logo} | qty ${it.qty} × ${money(each)} = ${money(each*it.qty)}`);
     } else if (it.kind === "board") {
       let proofLabel = "";
       if (it.proof) { pr++; files["proof"+pr] = new File([it.proof], `proof-item${no}.jpg`, {type:"image/jpeg"}); proofLabel = ` | layout proof: see proof${pr}`; }
