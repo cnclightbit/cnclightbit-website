@@ -212,6 +212,8 @@
   .dlv-opt b{display:block;font-size:.92rem}
   .dlv-opt small{display:block;font-size:.76rem;color:var(--muted)}
   .dlv-opt.off{opacity:.45;cursor:not-allowed}
+  .pay-opts{grid-template-columns:1fr 1fr 1fr}
+  @media (max-width:520px){.pay-opts{grid-template-columns:1fr}}
   .ct-disc span:last-child{color:#7ee08a}
   .row3{display:grid;grid-template-columns:1.4fr .8fr 1fr;gap:10px}
   @media (max-width:520px){.dlv-opts{grid-template-columns:1fr}.row3{grid-template-columns:1fr 1fr}.row3>div:first-child{grid-column:1/-1}}
@@ -669,7 +671,7 @@
   </ul>
   <p>We never sell, rent or share your information for marketing. It's only shared with the services that help us fill your order: our website host (Netlify), our email (Google), our invoicing (Wave) and the carrier that delivers your package (USPS).</p>
   <h4>Payments</h4>
-  <p>This website never asks for or stores card or bank details. You pay through a secure invoice from Wave. Pay by debit card, bank transfer or cash and save 3%. Credit card payments are the regular price.</p>
+  <p>This website never asks for or stores card or bank details. You pay through a secure invoice from Wave. Pay by bank transfer or cash and save 3%. Credit and debit card payments are the regular price.</p>
   <h4>Security</h4>
   <p>Everything you send through this site is encrypted (https). We regularly delete old order requests once they're filled.</p>
   <h4>Your choices</h4>
@@ -731,7 +733,7 @@
       <div class="total" id="mTotal" aria-live="polite"></div>
       <button class="btn" type="submit" style="width:100%;justify-content:center">🛒 Add to cart</button>
       <div class="form-msg" role="status"></div>
-      <p class="pay-note" style="margin-top:10px">Add as many shirts and knives as you like, then check out once. No payment is taken on this site. We'll email you an invoice. Pay by debit card, bank transfer or cash and save 3%. Credit card payments are the regular price.</p>
+      <p class="pay-note" style="margin-top:10px">Add as many shirts and knives as you like, then check out once. No payment is taken on this site. We'll email you an invoice. Pay by bank transfer or cash and save 3%. Credit and debit card payments are the regular price.</p>
     </form>
   </div>
 </div>
@@ -784,10 +786,9 @@
       <div class="delivery" data-p="c2"></div>
       <fieldset class="dlv" id="payBox">
         <legend>How will you pay? <span class="req">*</span></legend>
-        <p class="hint" style="margin:-2px 0 8px">Debit card, bank transfer and cash get a <b>3% discount</b>, shown in your total above. Credit card is the regular price. You'll pay when we email your invoice (or in person at pickup).</p>
-        <div class="dlv-opts">
-          <label class="dlv-opt"><input type="radio" name="payment" value="credit"> <span><b>Credit card</b><small>Regular price</small></span></label>
-          <label class="dlv-opt"><input type="radio" name="payment" value="debit"> <span><b>Debit card</b><small>3% off</small></span></label>
+        <p class="hint" style="margin:-2px 0 8px">Bank transfer and cash get a <b>3% discount</b>, shown in your total above. Credit and debit cards are the regular price. You'll pay when we email your invoice (or in person at pickup).</p>
+        <div class="dlv-opts pay-opts">
+          <label class="dlv-opt"><input type="radio" name="payment" value="card"> <span><b>Credit or debit card</b><small>Regular price</small></span></label>
           <label class="dlv-opt"><input type="radio" name="payment" value="bank"> <span><b>Bank transfer (ACH)</b><small>3% off</small></span></label>
           <label class="dlv-opt" id="payCashOpt"><input type="radio" name="payment" value="cash"> <span><b>Cash</b><small>3% off · pickup only</small></span></label>
         </div>
@@ -1078,7 +1079,7 @@ const SIZES = ["S","M","L","XL","2XL","3XL"];
 /* T-SHIRT PRICES (US dollars) by Comfort Colors style and size.
    Full cost (blank + blank shipping + DTF with sheet shipping + 5% misprints + press time at $20/hr)
    with a 30% profit margin (cost ÷ 0.70), plus 3% for card processing, rounded up to the next dollar.
-   Customers who pay by debit card, bank transfer or cash get the 3% back (see PAY_DISCOUNT). */
+   Customers who pay by bank transfer or cash get the 3% back (see PAY_DISCOUNT). */
 const TEE_PRICES = {
   //        S   M   L   XL  2XL 3XL
   "1717": [ 23, 23, 24, 24, 28, 31 ],   // short sleeve
@@ -1923,12 +1924,12 @@ function shippingCost(){
        + Math.max(0, kn - SHIPPING.KNIVES_FREE_WITH_SHIRTS) * SHIPPING.KNIFE_EXTRA_WITH_SHIRTS;
 }
 function isShipping(){ const c = document.querySelector('#cartForm [name="delivery"]:checked'); return !!c && c.value === "ship"; }
-/* PAYMENT: prices include 3% for card processing; debit, bank transfer and cash take it back off the items
+/* PAYMENT: prices include 3% for card processing; bank transfer and cash take it back off the items
    (shipping is not discounted). */
 const PAY_DISCOUNT = 0.03;
-const PAY_LABELS = { credit:"Credit card", debit:"Debit card", bank:"Bank transfer (ACH)", cash:"Cash at pickup" };
+const PAY_LABELS = { card:"Credit or debit card", bank:"Bank transfer (ACH)", cash:"Cash at pickup" };
 function payMethod(){ const c = document.querySelector('#cartForm [name="payment"]:checked'); return c ? c.value : ""; }
-const payDiscount = itemsTotal => (payMethod() && payMethod() !== "credit") ? Math.round(itemsTotal * PAY_DISCOUNT * 100) / 100 : 0;
+const payDiscount = itemsTotal => (payMethod() === "bank" || payMethod() === "cash") ? Math.round(itemsTotal * PAY_DISCOUNT * 100) / 100 : 0;
 function syncPayOptions(){
   const ship = isShipping(), cash = document.querySelector('#cartForm [name="payment"][value="cash"]');
   cash.disabled = ship; $("#payCashOpt").classList.toggle("off", ship);
@@ -1991,7 +1992,7 @@ function renderCart(){
       ${disc ? `<div class="ct-disc"><span>${PAY_LABELS[payMethod()]} discount (3% off items)</span><span>−${money(disc)}</span></div>` : ""}
       ${isShipping() ? `<div><span>Shipping (USPS)</span><span>${money(ship)}</span></div>` : ""}
       <div class="ct-total"><span>Total</span><span>${money(tees+knives+boards-disc+ship)}</span></div>
-      ${payMethod() ? "" : `<p class="hint">Paying by debit card, bank transfer or cash? Choose it below to take 3% off.</p>`}
+      ${payMethod() ? "" : `<p class="hint">Paying by bank transfer or cash? Choose it below to take 3% off.</p>`}
       <p class="hint">${isShipping() ? "Shipping by USPS Ground Advantage, usually 2–5 business days." : `Local pickup is free. Shipping would be ${money(shippingCost())} — choose “Ship it to me” below.`}</p>`;
     $("#cartForm").hidden = false;
   }
