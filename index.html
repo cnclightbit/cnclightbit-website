@@ -174,6 +174,14 @@
   .hp{position:absolute;left:-9999px}
 
   .knife-card{display:grid;grid-template-columns:1.2fr 1fr}
+  .pick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .pick-img{aspect-ratio:4/3;display:grid;place-items:center;background:#737373;overflow:hidden}
+  .pick-img svg{height:92%;width:auto;display:block}
+  .pick-img.pick-knife,.pick-img.pick-board{background:#d9dbdd;padding:14px}
+  .pick-img{position:relative}
+  .pick-img img{position:absolute;inset:14px;width:calc(100% - 28px);height:calc(100% - 28px);object-fit:contain;display:block}
+  .pick-card h3{margin:0}
+  @media (max-width:820px){ .pick-grid{grid-template-columns:1fr} .pick-img{aspect-ratio:16/9} }
   .knife-card-img{background:#d9dbdd;display:grid;gap:2px;grid-template-columns:1fr 1fr;align-items:center}
   .knife-card-img img{width:100%;height:auto;object-fit:contain;display:block;align-self:center}
   .knife-box{max-width:1040px;grid-template-columns:1.15fr 1fr}
@@ -382,7 +390,6 @@
       CNC <b>LightBit</b>
     </a>
     <ul class="nav-links" id="navLinks">
-      <li><a href="#products">Services</a></li>
       <li class="has-sub">
         <button type="button" class="sub-btn" id="subBtn" aria-expanded="false" aria-controls="subMenu">Design Your Own <span aria-hidden="true">▾</span></button>
         <ul class="sub" id="subMenu">
@@ -391,6 +398,7 @@
           <li><a href="#boards">Cutting Boards</a></li>
         </ul>
       </li>
+      <li><a href="#products">Services</a></li>
       <li><a href="#gallery">Gallery</a></li>
       <li><a href="#how">How it works</a></li>
       <li><a href="#contact">Contact</a></li>
@@ -502,17 +510,45 @@
     </ul>
   </div>
 
-  <!-- PRODUCTS -->
-  <section id="products">
+  <!-- DESIGN YOUR OWN: quick picks -->
+  <section id="design" class="pick-sec">
     <div class="wrap">
       <div class="sec-head">
         <div>
-          <span class="eyebrow">What we make</span>
-          <h2>CNC products & services</h2>
+          <span class="eyebrow">Made to order in Lucedale</span>
+          <h2>Design your own</h2>
         </div>
-        <div class="filters" id="filters" role="group" aria-label="Filter products"></div>
+        <p>Pick a product, make it yours, and see it before you order.</p>
       </div>
-      <div class="grid" id="productGrid"></div>
+      <div class="pick-grid">
+        <article class="card pick-card">
+          <div class="pick-img" id="pickTee" aria-hidden="true"></div>
+          <div class="card-body">
+            <span class="tag">Comfort Colors</span>
+            <h3>T-shirts</h3>
+            <p>Lake-life back designs, short or long sleeve, your color and front logo.</p>
+            <div class="card-foot"><span class="price" id="pickTeeFrom"></span><a class="btn" href="#tees">Design yours</a></div>
+          </div>
+        </article>
+        <article class="card pick-card">
+          <div class="pick-img pick-knife"><img src="designs/knife-face-side.webp" alt="Etched pocket knife" loading="lazy"></div>
+          <div class="card-body">
+            <span class="tag">Laser etched</span>
+            <h3>Pocket knives</h3>
+            <p>Your artwork on the blade side and a name on the clip.</p>
+            <div class="card-foot"><span class="price" id="pickKnifeFrom"></span><a class="btn" href="#knives">Design yours</a></div>
+          </div>
+        </article>
+        <article class="card pick-card">
+          <div class="pick-img pick-board"><img src="designs/cutting-board.webp" alt="CNC-carved cutting board" loading="lazy"></div>
+          <div class="card-body">
+            <span class="tag">CNC carved</span>
+            <h3>Cutting boards</h3>
+            <p>Solid butcher block with your name V-carved into the top.</p>
+            <div class="card-foot"><span class="price" id="pickBoardFrom"></span><a class="btn" href="#boards">Design yours</a></div>
+          </div>
+        </article>
+      </div>
     </div>
   </section>
 
@@ -589,6 +625,20 @@
           </div>
         </div>
       </article>
+    </div>
+  </section>
+
+  <!-- PRODUCTS -->
+  <section id="products">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <span class="eyebrow">What we make</span>
+          <h2>CNC products & services</h2>
+        </div>
+        <div class="filters" id="filters" role="group" aria-label="Filter products"></div>
+      </div>
+      <div class="grid" id="productGrid"></div>
     </div>
   </section>
 
@@ -1209,6 +1259,8 @@ $("#teeDesignCount").textContent = TEES.length;
 for (const k of STYLE_ORDER) $("#teeFrom"+k).textContent = money(styleFrom(k));
 $("#teePickSwatches").innerHTML = ["Pepper","Blue Jean","Chalky Mint","Butter","Brick","Ivory"].map(c=>`<span style="background:${CC_COLORS[c]}" title="${c}"></span>`).join("") + "<em>+ many more</em>";
 $("#teeFrom").textContent = "From " + money(FROM_PRICE);
+$("#pickTee").innerHTML = teeSVG(TEES.find(t=>/bass/i.test(t.name)) || TEES[0], CC_COLORS[DEFAULT_COLOR], {style:"1717", view:"back"});
+$("#pickTeeFrom").textContent = "From " + money(FROM_PRICE);
 $("#openTeeDesigner").addEventListener("click", ()=> openTee(0, "1717"));
 
 /* ---------- Tee modal ---------- */
@@ -1548,6 +1600,7 @@ const CLIP_BOX = { cx:450, cy:230.5, w:430, h:71, fill:0.90 };   // belt clip en
     const lbl = $("#kKeepOutLabel"); lbl.setAttribute("x", (b.x1+b.x2)/2); lbl.setAttribute("y", b.y1 - pad - 10);
   })();
   $("#knifeFrom").innerHTML = KNIFE_PRICE ? `${money(KNIFE_PRICE)} each<small class="bulk-note">${money(KNIFE_BULK.price)} each for more than ${KNIFE_BULK.minQty-1}</small>` : "Price on request";
+  $("#pickKnifeFrom").textContent = money(KNIFE_PRICE) + " each";
 
   // ---- open / close
   let lastF = null;
@@ -1780,6 +1833,7 @@ const BOARD_ALLOWED = /[^A-Za-z0-9 &.,'\-]/g;
   const pr = $("#bPocket");
   pr.setAttribute("x", P.cx - P.w/2); pr.setAttribute("y", P.cy - P.h/2); pr.setAttribute("width", P.w); pr.setAttribute("height", P.h); pr.setAttribute("rx", 6);
   $("#boardFrom").textContent = money(BOARD_PRICE) + " each";
+  $("#pickBoardFrom").textContent = money(BOARD_PRICE) + " each";
 
   let lastF = null;
   $("#openBoard").addEventListener("click", ()=>{
