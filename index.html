@@ -667,7 +667,7 @@
   </ul>
   <p>We never sell, rent or share your information for marketing. It's only shared with the services that help us fill your order: our website host (Netlify), our email (Google), our invoicing (Wave) and the carrier that delivers your package (USPS).</p>
   <h4>Payments</h4>
-  <p>This website never asks for or stores card or bank details. You pay through a secure invoice from Wave.</p>
+  <p>This website never asks for or stores card or bank details. You pay through a secure invoice from Wave. Invoices paid by credit card include a 3% processing fee. No fee for debit cards or bank transfer (ACH).</p>
   <h4>Security</h4>
   <p>Everything you send through this site is encrypted (https). We regularly delete old order requests once they're filled.</p>
   <h4>Your choices</h4>
@@ -729,7 +729,7 @@
       <div class="total" id="mTotal" aria-live="polite"></div>
       <button class="btn" type="submit" style="width:100%;justify-content:center">🛒 Add to cart</button>
       <div class="form-msg" role="status"></div>
-      <p class="pay-note" style="margin-top:10px">Add as many shirts and knives as you like, then check out once. No payment is taken on this site. We'll email you an invoice.</p>
+      <p class="pay-note" style="margin-top:10px">Add as many shirts and knives as you like, then check out once. No payment is taken on this site. We'll email you an invoice. Invoices paid by credit card include a 3% processing fee. No fee for debit cards or bank transfer (ACH).</p>
     </form>
   </div>
 </div>
@@ -784,7 +784,7 @@
       <textarea id="c2-notes" name="message" style="min-height:70px" placeholder="Need it by a certain date?"></textarea>
       <button class="btn" type="submit" style="width:100%;justify-content:center">Send order request</button>
       <div class="form-msg" role="status"></div>
-      <p class="pay-note" style="margin-top:10px">No payment is taken on this site. We'll confirm your order and email you an invoice to pay online.</p>
+      <p class="pay-note" style="margin-top:10px">No payment is taken on this site. We'll confirm your order and email you an invoice to pay online. Invoices paid by credit card include a 3% processing fee. No fee for debit cards or bank transfer (ACH).</p>
     </form>
   </div>
 </aside>
@@ -1064,13 +1064,14 @@ const CC_COLORS = {
 const DEFAULT_COLOR = "Pepper";
 const SIZES = ["S","M","L","XL","2XL","3XL"];
 /* T-SHIRT PRICES (US dollars) by Comfort Colors style and size.
-   Set from wholesale cost: every price is cost × 2.55, rounded to the dollar (1717 S–XL = $22). */
+   Full cost (blank + blank shipping + DTF with sheet shipping + 5% misprints + press time at $20/hr)
+   with a 30% profit margin (price = cost ÷ 0.70), rounded up to the next dollar. */
 const TEE_PRICES = {
   //        S   M   L   XL  2XL 3XL
-  "1717": [ 22, 22, 22, 22, 26, 31 ],   // short sleeve
-  "6030": [ 25, 25, 25, 25, 29, 35 ],   // short sleeve + pocket
-  "6014": [ 33, 33, 33, 33, 37, 46 ],   // long sleeve
-  "4410": [ 38, 38, 38, 38, 46, 52 ],   // long sleeve + pocket
+  "1717": [ 22, 22, 23, 23, 27, 30 ],   // short sleeve
+  "6030": [ 24, 24, 25, 25, 29, 32 ],   // short sleeve + pocket
+  "6014": [ 32, 32, 33, 33, 36, 41 ],   // long sleeve
+  "4410": [ 34, 34, 35, 35, 41, 45 ],   // long sleeve + pocket
 };
 const money = n => "$" + n.toFixed(2).replace(/\.00$/, "");
 const FROM_PRICE = Math.min(...Object.values(TEE_PRICES).flat());
