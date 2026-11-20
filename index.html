@@ -527,7 +527,7 @@
         <div class="card-body">
           <span class="tag">Short or long sleeve · back print</span>
           <h3>Design your tee</h3>
-          <p>Choose from <span id="teeDesignCount"></span> lake-life back designs on Comfort Colors 1717 or 6030 pocket tees, or 6014 long sleeves (+<span id="teeLsAdd"></span>) and 4410 pocket long sleeves (+<span id="teePocketLsAdd"></span>), with your choice of sleeve graphic.</p>
+          <p>Choose from <span id="teeDesignCount"></span> lake-life back designs on Comfort Colors 1717 tees (from <span id="teeFrom1717"></span>) or 6030 pocket tees (from <span id="teeFrom6030"></span>), or 6014 long sleeves (from <span id="teeFrom6014"></span>) and 4410 pocket long sleeves (from <span id="teeFrom4410"></span>), with your choice of sleeve graphic.</p>
           <div class="swatches-mini" id="teePickSwatches"></div>
           <div class="card-foot">
             <span class="price" id="teeFrom"></span>
@@ -1063,21 +1063,25 @@ const CC_COLORS = {
 };
 const DEFAULT_COLOR = "Pepper";
 const SIZES = ["S","M","L","XL","2XL","3XL"];
-/* T-shirt price by size (US dollars) */
-const SIZE_PRICES = { S:22, M:25, L:30, XL:32, "2XL":35, "3XL":38 };
+/* T-SHIRT PRICES (US dollars) by Comfort Colors style and size.
+   Set from wholesale cost: every price is cost × 2.55, rounded to the dollar (1717 S–XL = $22). */
+const TEE_PRICES = {
+  //        S   M   L   XL  2XL 3XL
+  "1717": [ 22, 22, 22, 22, 26, 31 ],   // short sleeve
+  "6030": [ 25, 25, 25, 25, 29, 35 ],   // short sleeve + pocket
+  "6014": [ 33, 33, 33, 33, 37, 46 ],   // long sleeve
+  "4410": [ 38, 38, 38, 38, 46, 52 ],   // long sleeve + pocket
+};
 const money = n => "$" + n.toFixed(2).replace(/\.00$/, "");
-const FROM_PRICE = Math.min(...Object.values(SIZE_PRICES));
-/* Extra charge over the short-sleeve price, in every size. Styles not listed cost the base price. */
-const STYLE_ADD = { "6014":10, "4410":15 };   // 6014 long sleeve +$10 · 4410 long sleeve with pocket +$15
-const LONG_SLEEVE_ADD = Math.min(...Object.values(STYLE_ADD));
+const FROM_PRICE = Math.min(...Object.values(TEE_PRICES).flat());
+const styleFrom = style => Math.min(...TEE_PRICES[style]);
 /* SLEEVE GRAPHICS — long sleeves only, printed down the wearer's left sleeve. Add new ones here
    (a tall, narrow transparent image works best). Keep "No sleeve graphic" last. */
 const SLEEVE_ARTS = [
   { id:"fish-stack", name:"Lake-life fish stack", img:"designs/sleeve.webp" },
   { id:"none",       name:"No sleeve graphic" },
 ];
-const styleAdd = style => STYLE_ADD[style] || 0;
-const priceFor = (size, style) => SIZE_PRICES[size] + styleAdd(style);
+const priceFor = (size, style) => TEE_PRICES[style][SIZES.indexOf(size)];
 const STYLE_ORDER = ["1717","6030","6014","4410"];   // short sleeves first, then long sleeves
 const styleText = s => `Comfort Colors ${STYLES[s].label} – ${STYLES[s].name}`;
 /* ===================================================================== */
@@ -1187,8 +1191,7 @@ $("#c-interest").value = "Something custom";
 /* ---------- T-shirt card: one "Design yours" button; the back design is picked inside ---------- */
 $("#teePickArt").innerHTML = TEES.map(t=>teeSVG(t, CC_COLORS[DEFAULT_COLOR], {style:"1717", view:"back"})).join("");
 $("#teeDesignCount").textContent = TEES.length;
-$("#teeLsAdd").textContent = money(STYLE_ADD["6014"]);
-$("#teePocketLsAdd").textContent = money(STYLE_ADD["4410"]);
+for (const k of STYLE_ORDER) $("#teeFrom"+k).textContent = money(styleFrom(k));
 $("#teePickSwatches").innerHTML = ["Pepper","Blue Jean","Chalky Mint","Butter","Brick","Ivory"].map(c=>`<span style="background:${CC_COLORS[c]}" title="${c}"></span>`).join("") + "<em>+ many more</em>";
 $("#teeFrom").textContent = "From " + money(FROM_PRICE);
 $("#openTeeDesigner").addEventListener("click", ()=> openTee(0, "1717"));
@@ -1228,7 +1231,7 @@ $("#mDesigns").addEventListener("click", e=>{
   cur = TEES[+b.dataset.d]; showDesign(); renderDesigns(); setView("back");
 });
 function renderStyles(){
-  $("#mStyles").innerHTML = STYLE_ORDER.map(k=>[k,STYLES[k]]).map(([k,s])=>`<button type="button" class="size style-btn" role="radio" aria-checked="${k===selStyle}" data-st="${k}"><b>${s.label}</b><small>${s.name}${styleAdd(k) ? " · +"+money(styleAdd(k)) : ""}</small></button>`).join("");
+  $("#mStyles").innerHTML = STYLE_ORDER.map(k=>[k,STYLES[k]]).map(([k,s])=>`<button type="button" class="size style-btn" role="radio" aria-checked="${k===selStyle}" data-st="${k}"><b>${s.label}</b><small>${s.name} · from ${money(styleFrom(k))}</small></button>`).join("");
   $("#mTag").textContent = `Comfort Colors ${STYLES[selStyle].label} · ${STYLES[selStyle].name}`;
 }
 function renderLogos(){
