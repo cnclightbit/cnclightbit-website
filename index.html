@@ -319,7 +319,10 @@
   .modal-art:hover svg{filter:drop-shadow(0 4px 10px rgba(0,0,0,.3))}
   .modal-art:focus-visible{outline:2px solid var(--accent);outline-offset:-4px}
   .modal-art.flipping{transform:scaleX(0)}
-  .modal-art{overflow:hidden;--z:1;--ox:50%;--oy:50%}
+  .modal-art{overflow:hidden;--z:1;--ox:50%;--oy:50%;touch-action:pan-y}
+  .modal-art.zoomed{touch-action:none}
+  .touch-hint{display:none}
+  @media (hover:none) and (pointer:coarse){ .touch-hint{display:inline} }
   .modal-art svg{transform:scale(var(--z));transform-origin:var(--ox) var(--oy);transition:transform .12s ease-out}
   .modal-art.zoomed{cursor:grab}.modal-art.zoomed.panning{cursor:grabbing}
   .zoom-ctl{display:flex;align-items:center;gap:6px;margin:4px 0 2px}
@@ -776,7 +779,7 @@
         <button type="button" id="zReset" class="z-reset" hidden>Reset</button>
       </div>
       <p class="art-note">Scroll to zoom · Hold the scroll wheel and drag to move around · Click the shirt to flip it. Design prints on the back; front logo goes on the left chest.</p>
-      <p class="ref-note">Previews are for illustration only. Final print size and placement may vary slightly.</p>
+      <p class="ref-note"><span class="touch-hint">Pinch the shirt to zoom, tap to flip. </span>Previews are for illustration only. Final print size and placement may vary slightly.</p>
     </div>
     <form class="modal-form" id="teeForm" novalidate>
       <span class="tag" id="mTag">T-shirt design</span>
@@ -1488,6 +1491,38 @@ window.addEventListener("mousemove", e=>{
 window.addEventListener("mouseup", ()=>{ if (pan) { pan = null; $("#mArt").classList.remove("panning"); } });
 // a drag shouldn't also flip the shirt
 $("#mArt").addEventListener("click", e=>{ if (panMoved) { e.stopImmediatePropagation(); panMoved = false; } }, true);
+/* phones: pinch the shirt to zoom (1x–4x), drag with one finger to look around while zoomed */
+let pinch = null, tpan = null, touchMoved = false;
+const tDist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+$("#mArt").addEventListener("touchstart", e=>{
+  panMoved = false;
+  const art = $("#mArt"), cs = getComputedStyle(art), r = art.getBoundingClientRect();
+  const ox = parseFloat(cs.getPropertyValue("--ox")) || 50, oy = parseFloat(cs.getPropertyValue("--oy")) || 50;
+  if (e.touches.length === 2) {
+    e.preventDefault(); touchMoved = true; tpan = null;
+    const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2, cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    pinch = { d:tDist(e.touches), z:zoom, ox: zoom > 1 ? ox : (cx - r.left) / r.width * 100, oy: zoom > 1 ? oy : (cy - r.top) / r.height * 100 };
+  } else if (e.touches.length === 1 && zoom > 1) {
+    touchMoved = false; tpan = { x:e.touches[0].clientX, y:e.touches[0].clientY, ox, oy, r };
+  } else touchMoved = false;
+}, { passive:false });
+$("#mArt").addEventListener("touchmove", e=>{
+  const clamp = v => Math.min(100, Math.max(0, v));
+  if (pinch && e.touches.length === 2) {
+    e.preventDefault(); setZoom(pinch.z * tDist(e.touches) / pinch.d, pinch.ox, pinch.oy);
+  } else if (tpan && e.touches.length === 1 && zoom > 1) {
+    e.preventDefault();
+    const dx = e.touches[0].clientX - tpan.x, dy = e.touches[0].clientY - tpan.y;
+    if (Math.hypot(dx, dy) > 6) touchMoved = true;
+    const k = 100 / (zoom - 1);
+    setZoom(zoom, clamp(tpan.ox - dx / tpan.r.width * k), clamp(tpan.oy - dy / tpan.r.height * k));
+  }
+}, { passive:false });
+$("#mArt").addEventListener("touchend", e=>{
+  if (e.touches.length < 2) pinch = null;
+  if (e.touches.length === 0) { tpan = null; if (zoom < 1.08) setZoom(1); }
+  if (touchMoved) panMoved = true;          // the tap-to-flip click is skipped after a pinch or drag
+});
 $("#mArt").addEventListener("auxclick", e=>{ if (e.button === 1) e.preventDefault(); });
 $("#zIn").addEventListener("click", ()=> setZoom(zoom * 1.25));
 $("#zOut").addEventListener("click", ()=> setZoom(zoom / 1.25));
