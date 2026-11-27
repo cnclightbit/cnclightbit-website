@@ -1063,11 +1063,11 @@ const TEES = [
   { name:"Snapping Turtle",   aud:"adult", img:"designs/turtle.webp",   desc:"An alligator-tough snapper lunging after a school of minnows." },
   // Swamp Friends stays first in the Youth list (Jeff's request). Add new youth designs below it.
   { name:"Swamp Friends",     aud:"youth", img:"designs/swamp-friends.webp", desc:"Youth design: a smiling gator, turtle, bass, bluegill, crappie, gar and catfish under the cypress trees and Spanish moss." },
-  { name:"Bass Wacky Rig (Youth)",   aud:"youth", img:"designs/bass-youth.webp",    desc:"Youth design: a largemouth bass leaping for a blue worm on a wacky rig." },
-  { name:"Bream & Cricket (Youth)",  aud:"youth", img:"designs/bream-youth.webp",   desc:"Youth design: a bream eyeing a cricket under a red-and-white bobber." },
-  { name:"Crappie & Minnow (Youth)", aud:"youth", img:"designs/crappie-youth-v2.webp", desc:"Youth design: a speckled crappie going after a minnow on the hook." },
-  { name:"Snapping Turtle (Youth)",  aud:"youth", img:"designs/turtle-youth.webp",  desc:"Youth design: a snapping turtle on a mossy log chasing minnows." },
-  { name:"Catfish & Cheeseball (Youth)", aud:"youth", img:"designs/catfish-youth.webp", desc:"Youth design: a channel catfish going after a cheeseball bait over driftwood and river rocks." },
+  { name:"Bass Wacky Rig",   aud:"youth", img:"designs/bass-youth.webp",    desc:"Youth design: a largemouth bass leaping for a blue worm on a wacky rig." },
+  { name:"Bream & Cricket",  aud:"youth", img:"designs/bream-youth.webp",   desc:"Youth design: a bream eyeing a cricket under a red-and-white bobber." },
+  { name:"Crappie & Minnow", aud:"youth", img:"designs/crappie-youth-v2.webp", desc:"Youth design: a speckled crappie going after a minnow on the hook." },
+  { name:"Snapping Turtle",  aud:"youth", img:"designs/turtle-youth.webp",  desc:"Youth design: a snapping turtle on a mossy log chasing minnows." },
+  { name:"Catfish & Cheeseball", aud:"youth", img:"designs/catfish-youth.webp", desc:"Youth design: a channel catfish going after a cheeseball bait over driftwood and river rocks." },
 ];
 
 /* FRONT LOGOS — printed on the front left chest (wearer's left). Add more here. */
@@ -1296,7 +1296,7 @@ $("#productGrid").addEventListener("click", e=>{
   $("#contact").scrollIntoView({behavior:"smooth"});
   setTimeout(()=>$("#c-name").focus({preventScroll:true}), 500);
 });
-$("#c-interest").innerHTML = [...PRODUCTS.map(p=>p.name), "Etched pocket knife", ...TEES.map(t=>t.name+" (t-shirt)"), "Something custom"]
+$("#c-interest").innerHTML = [...PRODUCTS.map(p=>p.name), "Etched pocket knife", ...TEES.map(t=>t.name+(t.aud==="youth"?" (youth t-shirt)":" (t-shirt)")), "Something custom"]
   .map(n=>`<option>${esc(n)}</option>`).join("");
 $("#c-interest").value = "Something custom";
 
@@ -1584,7 +1584,8 @@ $("#teeForm").addEventListener("submit", e=>{
   e.preventDefault();
   const msg = $("#teeForm .form-msg");
   if(!selSize){ msg.className="form-msg err"; msg.textContent="Please choose a size."; return; }
-  cartAdd({ kind:"tee", design:cur.name, style:selStyle, color:selColor, size:selSize,
+  cartAdd({ kind:"tee", design:cur.name + (cur.aud === "youth" ? " (Youth)" : ""),  // tag youth art on orders so it isn't mixed up with the adult version
+    style:selStyle, color:selColor, size:selSize,
             logo:FRONT_LOGOS.find(l=>l.id===selLogo).name, qty:clampQty($("#qInput").value),
             sleeve: STYLES[selStyle].long ? SLEEVE_ARTS.find(x=>x.id===selSleeve).name : "",
             thumb: teeSVG(cur, CC_COLORS[selColor], {style:selStyle, view:"back", sleeve:selSleeve}) });
