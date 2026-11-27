@@ -352,6 +352,8 @@
   .views{display:flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px;gap:3px}
   .views button{background:none;border:0;color:var(--muted);padding:6px 18px;border-radius:999px;font-weight:600;font-size:.88rem}
   .views button[aria-pressed="true"]{background:var(--accent);color:var(--ink)}
+  .aud-row{display:flex;align-items:center;gap:12px;margin:4px 0 14px;font-size:.86rem;font-weight:600}
+  .aud-switch{width:max-content}
   .art-note{font-size:.78rem;color:#f0f0f0;text-align:center}
   .swatch[aria-checked="true"]{outline:2px solid var(--accent);outline-offset:3px}
   .sizes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
@@ -388,8 +390,8 @@
     #teeModal #teeForm{grid-row:2}
     #teeModal .modal-art{min-height:0;height:30vh;max-height:230px;width:auto;flex:0 1 auto;padding:4px;aspect-ratio:1}
     #teeModal .modal-art svg{max-width:none;height:100%;width:auto}
-    #teeModal .views{flex-direction:column;order:-1}
-    #teeModal .views button{padding:6px 10px;font-size:.8rem}
+    #teeModal #mViews{flex-direction:column;order:-1}
+    #teeModal #mViews button{padding:6px 10px;font-size:.8rem}
     #teeModal .zoom-ctl,#teeModal .art-note{display:none}
     #teeModal .modal-art-wrap{display:grid;grid-template-columns:auto 1fr;align-items:center;justify-items:center;row-gap:2px;padding-bottom:6px}
     #teeModal .modal-art{height:26vh;max-height:200px}
@@ -771,6 +773,14 @@
       <h3 id="mTitle"></h3>
       <p class="desc" id="mDesc"></p>
 
+      <div class="aud-row">
+        <span>Show artwork for</span>
+        <div class="views aud-switch" id="mAud" role="group" aria-label="Adult or youth artwork">
+          <button type="button" data-a="adult" aria-pressed="true">Adult</button>
+          <button type="button" data-a="youth" aria-pressed="false">Youth</button>
+        </div>
+      </div>
+
       <div class="opt-label">Pick Artwork for Back of Shirt</div>
       <div class="sizes design-grid" id="mDesigns" role="radiogroup" aria-label="Back design"></div>
 
@@ -1041,22 +1051,24 @@ const PRODUCTS = [
 ];
 
 /* T-SHIRT DESIGNS — replace with your designs */
+/* AUDIENCE: every back design, front logo and sleeve graphic has aud:"adult", "youth" or "both".
+   The Adult / Youth switch in the designer shows only matching artwork (all shirt sizes stay available). */
 const TEES = [
-  { name:"Hooked Catfish",    img:"designs/catfish.webp",  desc:"A big channel cat going after the bait, with driftwood and river rocks." },
-  { name:"Crappie",           img:"designs/crappie.webp",  desc:"A speckled crappie chasing minnows over a sunken log." },
-  { name:"Bluegill & Cricket",img:"designs/bluegill.webp", desc:"A bluegill eyeing a cricket under a red-and-white bobber." },
-  { name:"Bass Wacky Rig",    img:"designs/bass.webp",     desc:"A largemouth bass hitting a blue worm on a wacky rig." },
-  { name:"Snapping Turtle",   img:"designs/turtle.webp",   desc:"An alligator-tough snapper lunging after a school of minnows." },
-  { name:"Swamp Friends",     img:"designs/swamp-friends.webp", desc:"Youth design: a smiling gator, turtle, bass, bluegill, crappie, gar and catfish under the cypress trees and Spanish moss." },
+  { name:"Hooked Catfish",    aud:"adult", img:"designs/catfish.webp",  desc:"A big channel cat going after the bait, with driftwood and river rocks." },
+  { name:"Crappie",           aud:"adult", img:"designs/crappie.webp",  desc:"A speckled crappie chasing minnows over a sunken log." },
+  { name:"Bluegill & Cricket",aud:"adult", img:"designs/bluegill.webp", desc:"A bluegill eyeing a cricket under a red-and-white bobber." },
+  { name:"Bass Wacky Rig",    aud:"adult", img:"designs/bass.webp",     desc:"A largemouth bass hitting a blue worm on a wacky rig." },
+  { name:"Snapping Turtle",   aud:"adult", img:"designs/turtle.webp",   desc:"An alligator-tough snapper lunging after a school of minnows." },
+  { name:"Swamp Friends",     aud:"youth", img:"designs/swamp-friends.webp", desc:"Youth design: a smiling gator, turtle, bass, bluegill, crappie, gar and catfish under the cypress trees and Spanish moss." },
 ];
 
 /* FRONT LOGOS — printed on the front left chest (wearer's left). Add more here. */
 const FRONT_LOGOS = [
-  { id:"cedar-creek", name:"Cedar Creek", img:"designs/cedar-creek.webp" },
-  { id:"fresh-water", name:"Fresh Water", img:"designs/fresh-water.webp" },
-  { id:"fresh-water-fishing", name:"Fresh Water Fishing", img:"designs/fresh-water-fishing.webp" },
-  { id:"cedar-creek-fish-camp", name:"Youth: Cedar Creek Fish Camp", img:"designs/cedar-creek-fish-camp-youth.webp" },
-  { id:"none",        name:"No front logo" },
+  { id:"cedar-creek", aud:"adult", name:"Cedar Creek", img:"designs/cedar-creek.webp" },
+  { id:"fresh-water", aud:"adult", name:"Fresh Water", img:"designs/fresh-water.webp" },
+  { id:"fresh-water-fishing", aud:"adult", name:"Fresh Water Fishing", img:"designs/fresh-water-fishing.webp" },
+  { id:"cedar-creek-fish-camp", aud:"youth", name:"Cedar Creek Fish Camp", img:"designs/cedar-creek-fish-camp-youth.webp" },
+  { id:"none", aud:"both", name:"No front logo" },
 ];
 
 /* COMFORT COLORS SHIRT STYLES — colors from the S&S Activewear catalog (Nov 2026) */
@@ -1162,8 +1174,8 @@ const styleFrom = style => Math.min(...TEE_PRICES[style]);
 /* SLEEVE GRAPHICS — long sleeves only, printed down the wearer's left sleeve. Add new ones here
    (a tall, narrow transparent image works best). Keep "No sleeve graphic" last. */
 const SLEEVE_ARTS = [
-  { id:"fish-stack", name:"Lake-life fish stack", img:"designs/sleeve.webp" },
-  { id:"none",       name:"No sleeve graphic" },
+  { id:"fish-stack", aud:"adult", name:"Lake-life fish stack", img:"designs/sleeve.webp" },
+  { id:"none",       aud:"both",  name:"No sleeve graphic" },
 ];
 const priceFor = (size, style) => TEE_PRICES[style][SIZES.indexOf(size)];
 const STYLE_ORDER = ["1717","6030","6014","4410"];   // short sleeves first, then long sleeves
@@ -1283,11 +1295,13 @@ $("#pickTeeFrom").textContent = "From " + money(FROM_PRICE);
 $("#openTeeDesigner").addEventListener("click", ()=> openTee(0, "1717"));
 
 /* ---------- Tee modal ---------- */
-let selSleeve = SLEEVE_ARTS[0].id;
+let selSleeve = SLEEVE_ARTS[0].id, selAud = "adult";
+const forAud = x => x.aud === "both" || x.aud === selAud;
 let cur = null, selStyle = "1717", selColor = DEFAULT_COLOR, selSize = null, selLogo = FRONT_LOGOS[0].id, selView = "back", lastFocus = null;
 function openTee(i, style){
   cur = TEES[i]; selStyle = style || "1717"; selColor = DEFAULT_COLOR; selSize = null;
-  selLogo = FRONT_LOGOS[0].id; selSleeve = SLEEVE_ARTS[0].id; selView = "back"; lastFocus = document.activeElement;
+  selAud = cur.aud === "youth" ? "youth" : "adult"; selLogo = ""; selSleeve = ""; syncAud();
+  selView = "back"; lastFocus = document.activeElement;
   showDesign();
   renderDesigns(); renderStyles(); renderSleeves(); renderLogos(); renderSwatches(); renderSizes();
   $("#qInput").value = 1;
@@ -1302,15 +1316,27 @@ function openTee(i, style){
 }
 function renderSleeves(){
   $("#mSleeveWrap").hidden = !STYLES[selStyle].long;
-  $("#mSleeves").innerHTML = SLEEVE_ARTS.map(x=>`<button type="button" class="size logo-btn" role="radio" aria-checked="${x.id===selSleeve}" data-sl="${x.id}">${x.img ? `<img src="${x.img}" alt="" style="object-fit:contain">` : ""}<span>${esc(x.name)}</span></button>`).join("");
+  $("#mSleeves").innerHTML = SLEEVE_ARTS.filter(forAud).map(x=>`<button type="button" class="size logo-btn" role="radio" aria-checked="${x.id===selSleeve}" data-sl="${x.id}">${x.img ? `<img src="${x.img}" alt="" style="object-fit:contain">` : ""}<span>${esc(x.name)}</span></button>`).join("");
 }
 $("#mSleeves").addEventListener("click", e=>{
   const b=e.target.closest("[data-sl]"); if(!b) return;
   selSleeve=b.dataset.sl; renderSleeves(); updateArt();
 });
+/* Adult / Youth switch: keeps each pick if it still fits, otherwise moves to the first matching one */
+function syncAud(){
+  $("#mAud").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.a===selAud));
+  if (!forAud(cur)) cur = TEES.find(forAud) || cur;
+  if (!FRONT_LOGOS.some(l=>l.id===selLogo && forAud(l))) selLogo = FRONT_LOGOS.find(forAud).id;
+  if (!SLEEVE_ARTS.some(x=>x.id===selSleeve && forAud(x))) selSleeve = SLEEVE_ARTS.find(forAud).id;
+}
+$("#mAud").addEventListener("click", e=>{
+  const b=e.target.closest("[data-a]"); if(!b || b.dataset.a===selAud) return;
+  selAud = b.dataset.a; syncAud();
+  showDesign(); renderDesigns(); renderLogos(); renderSleeves(); setView("back");
+});
 function showDesign(){ $("#mTitle").textContent = cur.name; $("#mDesc").textContent = cur.desc; }
 function renderDesigns(){
-  $("#mDesigns").innerHTML = TEES.map((t,i)=>`<button type="button" class="size logo-btn design-btn" role="radio" aria-checked="${t===cur}" data-d="${i}"><img src="${t.img}" alt=""><span>${esc(t.name)}</span></button>`).join("");
+  $("#mDesigns").innerHTML = TEES.map((t,i)=>[t,i]).filter(([t])=>forAud(t)).map(([t,i])=>`<button type="button" class="size logo-btn design-btn" role="radio" aria-checked="${t===cur}" data-d="${i}"><img src="${t.img}" alt=""><span>${esc(t.name)}</span></button>`).join("");
 }
 $("#mDesigns").addEventListener("click", e=>{
   const b=e.target.closest("[data-d]"); if(!b) return;
@@ -1321,7 +1347,7 @@ function renderStyles(){
   $("#mTag").textContent = `Comfort Colors ${STYLES[selStyle].label} · ${STYLES[selStyle].name}`;
 }
 function renderLogos(){
-  $("#mLogos").innerHTML = FRONT_LOGOS.map(l=>`<button type="button" class="size logo-btn" role="radio" aria-checked="${l.id===selLogo}" data-lg="${l.id}">${l.img ? `<img src="${l.img}" alt="">` : ""}<span>${esc(l.name)}</span></button>`).join("");
+  $("#mLogos").innerHTML = FRONT_LOGOS.filter(forAud).map(l=>`<button type="button" class="size logo-btn" role="radio" aria-checked="${l.id===selLogo}" data-lg="${l.id}">${l.img ? `<img src="${l.img}" alt="">` : ""}<span>${esc(l.name)}</span></button>`).join("");
 }
 function renderSwatches(){
   const list = STYLES[selStyle].colors;
