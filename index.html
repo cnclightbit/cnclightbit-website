@@ -1071,7 +1071,7 @@ const PRODUCTS = [
    The Adult / Youth switch in the designer shows only matching artwork (all shirt sizes stay available). */
 /* classic: { img } = Jeff has pre-made DTF prints in the older colors. They sell for CLASSIC_OFF less, while they last.
    When a design's classic prints run out, delete its classic:{...} and the option disappears. */
-const CLASSIC_OFF = 5;
+const CLASSIC_OFF = 0;   // set to 5 (or any amount) to put classic prints on sale; 0 = same price as new
 const TEES = [
   // Swamp Critters stays first in the Adult list (Jeff's request). Add new adult designs below it.
   { name:"Swamp Critters",    aud:"adult", img:"designs/swamp-critters.webp", classic:{ img:"designs/swamp-critters-classic.webp" }, desc:"A gator on the bank with a turtle, bass, bluegill, crappie, gar and catfish under the cypress trees and Spanish moss." },
@@ -1327,6 +1327,7 @@ $("#c-interest").value = "Something custom";
   $("#teePickArt").innerHTML = teeSVG({...t, img: t.img.replace(".webp", "-card.webp")}, CC_COLORS[DEFAULT_COLOR], {style:"1717", view:"back"}); }
 $("#teeDesignCount").textContent = TEES.length;
 $("#teeSaleLine").hidden = !TEES.some(t=>t.classic);
+if (!CLASSIC_OFF) $("#teeSaleLine").textContent = "Classic-color prints available while they last.";
 for (const k of STYLE_ORDER) $("#teeFrom"+k).textContent = money(styleFrom(k));
 $("#teePickSwatches").innerHTML = ["Pepper","Blue Jean","Chalky Mint","Butter","Brick","Ivory"].map(c=>`<span style="background:${CC_COLORS[c]}" title="${c}"></span>`).join("") + "<em>+ many more</em>";
 $("#teeFrom").textContent = "From " + money(FROM_PRICE);
@@ -1381,11 +1382,11 @@ const teePrice = (size, style, classic) => priceFor(size, style) - (classic ? CL
 function renderPrints(){
   const on = !!cur.classic; $("#mPrintWrap").hidden = !on;
   if (!on) { selPrint = "new"; return; }
-  $("#mPrints").innerHTML = [["new","New vibrant colors","Printed to order"],["classic","Classic colors",`In stock · ${money(CLASSIC_OFF)} off`]]
+  $("#mPrints").innerHTML = [["new","New vibrant colors","Printed to order"],["classic","Classic colors", CLASSIC_OFF ? `In stock · ${money(CLASSIC_OFF)} off` : "In stock"]]
     .map(([k,a,b])=>`<button type="button" class="size style-btn" role="radio" aria-checked="${k===selPrint}" data-pr="${k}"><b>${a}</b><small>${b}</small></button>`).join("");
   $("#mPrintNote").innerHTML = selPrint === "classic"
     ? `<b>Limited stock, while they last.</b> Back, sleeve and front logo in our original colors, already printed, so it's ready sooner.`
-    : `Want a deal? Our original <b>Classic colors</b> print is ${money(CLASSIC_OFF)} off while they last.`;
+    : (CLASSIC_OFF ? `Want a deal? Our original <b>Classic colors</b> print is ${money(CLASSIC_OFF)} off while they last.` : `Prefer the original look? Our <b>Classic colors</b> print is available while they last.`);
 }
 $("#mPrints").addEventListener("click", e=>{
   const b=e.target.closest("[data-pr]"); if(!b) return;
@@ -1393,7 +1394,7 @@ $("#mPrints").addEventListener("click", e=>{
 });
 function showDesign(){ $("#mTitle").textContent = cur.name; $("#mDesc").textContent = cur.desc; }
 function renderDesigns(){
-  $("#mDesigns").innerHTML = TEES.map((t,i)=>[t,i]).filter(([t])=>forAud(t)).map(([t,i])=>`<button type="button" class="size logo-btn design-btn" role="radio" aria-checked="${t===cur}" data-d="${i}"><img src="${t.img}" alt=""><span>${esc(t.name)}${t.classic ? `<em class="sale-chip">Classic on sale</em>` : ""}</span></button>`).join("");
+  $("#mDesigns").innerHTML = TEES.map((t,i)=>[t,i]).filter(([t])=>forAud(t)).map(([t,i])=>`<button type="button" class="size logo-btn design-btn" role="radio" aria-checked="${t===cur}" data-d="${i}"><img src="${t.img}" alt=""><span>${esc(t.name)}${t.classic ? `<em class="sale-chip">${CLASSIC_OFF ? "Classic on sale" : "Classic available"}</em>` : ""}</span></button>`).join("");
 }
 $("#mDesigns").addEventListener("click", e=>{
   const b=e.target.closest("[data-d]"); if(!b) return;
