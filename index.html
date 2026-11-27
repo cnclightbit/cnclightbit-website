@@ -378,6 +378,7 @@
     .modal-art{min-height:220px;padding:20px}
     .modal-art svg{max-width:220px}
   }
+  .ref-note{font-size:.74rem;color:#e6e6e6;opacity:.85;text-align:center;margin:6px 0 0;font-style:italic}
   @media (min-width:861px){ #teeModal .modal-art-wrap{position:sticky;top:0;align-self:start} #teeModal .modal-box{background:linear-gradient(to right,#737373 50%,var(--bg2) 50%)} }
   /* T-shirt designer on phones: a smaller shirt preview stays pinned at the top while the options scroll underneath */
   @media (max-width:860px){
@@ -390,6 +391,9 @@
     #teeModal .views{flex-direction:column;order:-1}
     #teeModal .views button{padding:6px 10px;font-size:.8rem}
     #teeModal .zoom-ctl,#teeModal .art-note{display:none}
+    #teeModal .modal-art-wrap{display:grid;grid-template-columns:auto 1fr;align-items:center;justify-items:center;row-gap:2px;padding-bottom:6px}
+    #teeModal .modal-art{height:26vh;max-height:200px}
+    #teeModal .ref-note{grid-column:1 / -1;font-size:.66rem;margin:0;line-height:1.3}
   }
   @media (max-width:520px){form .row{grid-template-columns:1fr;gap:0}}
 </style>
@@ -760,6 +764,7 @@
         <button type="button" id="zReset" class="z-reset" hidden>Reset</button>
       </div>
       <p class="art-note">Scroll to zoom · Tap the shirt to flip it. Design prints on the back; front logo goes on the left chest.</p>
+      <p class="ref-note">Previews are for illustration only. Final print size and placement may vary slightly.</p>
     </div>
     <form class="modal-form" id="teeForm" novalidate>
       <span class="tag" id="mTag">T-shirt design</span>
