@@ -345,6 +345,13 @@
   .logo-btn img{width:36px;height:36px}
   .logo-btn span{font-size:.85rem}
   .design-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .sale-chip{display:block;font-style:normal;font-size:.66rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#7ee08a;margin-top:2px}
+  .design-btn span .sale-chip{color:#7ee08a}
+  .design-btn[aria-checked="true"] .sale-chip{color:#1b5e20}
+  .print-grid .size small{display:block;font-weight:600}
+  .print-note{font-size:.84rem;color:var(--muted);margin:6px 0 0}
+  .print-note b{color:#7ee08a}
+  .sale-line{color:#7ee08a;font-weight:700;font-size:.92rem;margin:6px 0 0}
   .design-btn img{width:44px;height:44px;object-fit:contain;background:#737373;border-radius:6px;padding:2px}
   .tee-pick-card{display:grid;grid-template-columns:1.2fr 1fr}
   .tee-pick-art{background:#737373;display:flex;align-items:center;justify-content:center;padding:18px 12px}
@@ -590,6 +597,7 @@
           <span class="tag">Short or long sleeve · back print</span>
           <h3>Design your tee</h3>
           <p>Choose from <span id="teeDesignCount"></span> lake-life back designs on Comfort Colors 1717 tees (from <span id="teeFrom1717"></span>) or 6030 pocket tees (from <span id="teeFrom6030"></span>), or 6014 long sleeves (from <span id="teeFrom6014"></span>) and 4410 pocket long sleeves (from <span id="teeFrom4410"></span>), with your choice of sleeve graphic.</p>
+          <p class="sale-line" id="teeSaleLine" hidden>Classic-color prints on sale while they last.</p>
           <div class="swatches-mini" id="teePickSwatches"></div>
           <div class="card-foot">
             <span class="price" id="teeFrom"></span>
@@ -785,6 +793,12 @@
 
       <div class="opt-label">Pick Artwork for Back of Shirt</div>
       <div class="sizes design-grid" id="mDesigns" role="radiogroup" aria-label="Back design"></div>
+
+      <div id="mPrintWrap" hidden>
+        <div class="opt-label">Pick Print Colors</div>
+        <div class="sizes style-grid print-grid" id="mPrints" role="radiogroup" aria-label="Print colors"></div>
+        <p class="print-note" id="mPrintNote"></p>
+      </div>
 
       <div class="opt-label">Pick Comfort Colors Style</div>
       <div class="sizes style-grid" id="mStyles" role="radiogroup" aria-label="Shirt style"></div>
@@ -1055,10 +1069,13 @@ const PRODUCTS = [
 /* T-SHIRT DESIGNS — replace with your designs */
 /* AUDIENCE: every back design, front logo and sleeve graphic has aud:"adult", "youth" or "both".
    The Adult / Youth switch in the designer shows only matching artwork (all shirt sizes stay available). */
+/* classic: { img } = Jeff has pre-made DTF prints in the older colors. They sell for CLASSIC_OFF less, while they last.
+   When a design's classic prints run out, delete its classic:{...} and the option disappears. */
+const CLASSIC_OFF = 5;
 const TEES = [
   // Swamp Critters stays first in the Adult list (Jeff's request). Add new adult designs below it.
   { name:"Swamp Critters",    aud:"adult", img:"designs/swamp-critters.webp", desc:"A gator on the bank with a turtle, bass, bluegill, crappie, gar and catfish under the cypress trees and Spanish moss." },
-  { name:"Catfish & Cheeseball",aud:"adult", img:"designs/catfish.webp",  desc:"A big channel cat going after the bait, with driftwood and river rocks." },
+  { name:"Catfish & Cheeseball",aud:"adult", img:"designs/catfish.webp", classic:{ img:"designs/catfish-classic.webp" },  desc:"A big channel cat going after the bait, with driftwood and river rocks." },
   { name:"Crappie",           aud:"adult", img:"designs/crappie.webp",  desc:"A speckled crappie chasing minnows over a sunken log." },
   { name:"Bluegill & Cricket",aud:"adult", img:"designs/bluegill.webp", desc:"A bluegill eyeing a cricket under a red-and-white bobber." },
   { name:"Bass Wacky Rig",    aud:"adult", img:"designs/bass.webp",     desc:"A largemouth bass hitting a blue worm on a wacky rig." },
@@ -1307,6 +1324,7 @@ $("#c-interest").value = "Something custom";
 { const t = TEES.find(t=>t.name==="Swamp Critters") || TEES[0];
   $("#teePickArt").innerHTML = teeSVG({...t, img: t.img.replace(".webp", "-card.webp")}, CC_COLORS[DEFAULT_COLOR], {style:"1717", view:"back"}); }
 $("#teeDesignCount").textContent = TEES.length;
+$("#teeSaleLine").hidden = !TEES.some(t=>t.classic);
 for (const k of STYLE_ORDER) $("#teeFrom"+k).textContent = money(styleFrom(k));
 $("#teePickSwatches").innerHTML = ["Pepper","Blue Jean","Chalky Mint","Butter","Brick","Ivory"].map(c=>`<span style="background:${CC_COLORS[c]}" title="${c}"></span>`).join("") + "<em>+ many more</em>";
 $("#teeFrom").textContent = "From " + money(FROM_PRICE);
@@ -1322,8 +1340,8 @@ function openTee(i, style){
   cur = TEES[i]; selStyle = style || "1717"; selColor = DEFAULT_COLOR; selSize = null;
   selAud = cur.aud === "youth" ? "youth" : "adult"; selLogo = ""; selSleeve = ""; syncAud();
   selView = "back"; lastFocus = document.activeElement;
-  showDesign();
-  renderDesigns(); renderStyles(); renderSleeves(); renderLogos(); renderSwatches(); renderSizes();
+  selPrint = "new"; showDesign();
+  renderDesigns(); renderPrints(); renderStyles(); renderSleeves(); renderLogos(); renderSwatches(); renderSizes();
   $("#qInput").value = 1;
   $("#mSizeNote").textContent = "Pick one";
   $("#mColorNote").textContent = "";
@@ -1352,15 +1370,31 @@ function syncAud(){
 $("#mAud").addEventListener("click", e=>{
   const b=e.target.closest("[data-a]"); if(!b || b.dataset.a===selAud) return;
   selAud = b.dataset.a; syncAud();
-  showDesign(); renderDesigns(); renderLogos(); renderSleeves(); setView("back");
+  selPrint = "new"; showDesign(); renderDesigns(); renderPrints(); renderSizes(); updateTotal(); renderLogos(); renderSleeves(); setView("back");
+});
+let selPrint = "new";
+const artTee = () => (selPrint === "classic" && cur.classic) ? {...cur, img:cur.classic.img} : cur;
+const teePrice = (size, style, classic) => priceFor(size, style) - (classic ? CLASSIC_OFF : 0);
+function renderPrints(){
+  const on = !!cur.classic; $("#mPrintWrap").hidden = !on;
+  if (!on) { selPrint = "new"; return; }
+  $("#mPrints").innerHTML = [["new","New vibrant colors","Printed to order"],["classic","Classic colors",`In stock · ${money(CLASSIC_OFF)} off`]]
+    .map(([k,a,b])=>`<button type="button" class="size style-btn" role="radio" aria-checked="${k===selPrint}" data-pr="${k}"><b>${a}</b><small>${b}</small></button>`).join("");
+  $("#mPrintNote").innerHTML = selPrint === "classic"
+    ? `<b>Limited stock, while they last.</b> Our original color print, already made, so it's ready sooner.`
+    : `Want a deal? Our original <b>Classic colors</b> print is ${money(CLASSIC_OFF)} off while they last.`;
+}
+$("#mPrints").addEventListener("click", e=>{
+  const b=e.target.closest("[data-pr]"); if(!b) return;
+  selPrint=b.dataset.pr; renderPrints(); renderSizes(); updateTotal(); setView("back");
 });
 function showDesign(){ $("#mTitle").textContent = cur.name; $("#mDesc").textContent = cur.desc; }
 function renderDesigns(){
-  $("#mDesigns").innerHTML = TEES.map((t,i)=>[t,i]).filter(([t])=>forAud(t)).map(([t,i])=>`<button type="button" class="size logo-btn design-btn" role="radio" aria-checked="${t===cur}" data-d="${i}"><img src="${t.img}" alt=""><span>${esc(t.name)}</span></button>`).join("");
+  $("#mDesigns").innerHTML = TEES.map((t,i)=>[t,i]).filter(([t])=>forAud(t)).map(([t,i])=>`<button type="button" class="size logo-btn design-btn" role="radio" aria-checked="${t===cur}" data-d="${i}"><img src="${t.img}" alt=""><span>${esc(t.name)}${t.classic ? `<em class="sale-chip">Classic on sale</em>` : ""}</span></button>`).join("");
 }
 $("#mDesigns").addEventListener("click", e=>{
   const b=e.target.closest("[data-d]"); if(!b) return;
-  cur = TEES[+b.dataset.d]; showDesign(); renderDesigns(); setView("back");
+  cur = TEES[+b.dataset.d]; selPrint = "new"; showDesign(); renderDesigns(); renderPrints(); renderSizes(); updateTotal(); setView("back");
 });
 function renderStyles(){
   $("#mStyles").innerHTML = STYLE_ORDER.map(k=>[k,STYLES[k]]).map(([k,s])=>`<button type="button" class="size style-btn" role="radio" aria-checked="${k===selStyle}" data-st="${k}"><b>${s.label}</b><small>${s.name} · from ${money(styleFrom(k))}</small></button>`).join("");
@@ -1379,7 +1413,7 @@ function renderSwatches(){
   $("#mColorCount").textContent = `${list.length} colors`;
 }
 function renderSizes(){
-  $("#mSizes").innerHTML = SIZES.map(s=>`<button type="button" class="size" role="radio" aria-checked="${s===selSize}" data-s="${s}" aria-label="${s}, ${money(priceFor(s, selStyle))}">${s}<small>${money(priceFor(s, selStyle))}</small></button>`).join("");
+  $("#mSizes").innerHTML = SIZES.map(s=>`<button type="button" class="size" role="radio" aria-checked="${s===selSize}" data-s="${s}" aria-label="${s}, ${money(teePrice(s, selStyle, selPrint==="classic"))}">${s}<small>${money(teePrice(s, selStyle, selPrint==="classic"))}</small></button>`).join("");
 }
 function setView(v){
   selView = v;
@@ -1460,7 +1494,7 @@ function closeTee(){
   if(lastFocus) lastFocus.focus();
 }
 function updateArt(){
-  $("#mArt").innerHTML = teeSVG(cur, CC_COLORS[selColor], {style:selStyle, view:selView, logo:selLogo, sleeve:selSleeve});
+  $("#mArt").innerHTML = teeSVG(artTee(), CC_COLORS[selColor], {style:selStyle, view:selView, logo:selLogo, sleeve:selSleeve});
   $("#mColorName").textContent = selColor;
 }
 $("#mClose").addEventListener("click", closeTee);
@@ -1482,7 +1516,7 @@ $("#mSizes").addEventListener("click", e=>{
 function updateTotal(){
   const q = clampQty($("#qInput").value);
   if(!selSize){ $("#mTotal").innerHTML = `<span>Choose a size to see your price</span>`; return; }
-  const each = priceFor(selSize, selStyle);
+  const each = teePrice(selSize, selStyle, selPrint==="classic");
   $("#mTotal").innerHTML = `<span>${q} × ${money(each)} (${selStyle}, ${selSize})</span><strong>${money(each*q)}</strong>`;
 }
 const clampQty = v => Math.max(1, Math.min(99, parseInt(v)||1));
@@ -1584,11 +1618,12 @@ $("#teeForm").addEventListener("submit", e=>{
   e.preventDefault();
   const msg = $("#teeForm .form-msg");
   if(!selSize){ msg.className="form-msg err"; msg.textContent="Please choose a size."; return; }
-  cartAdd({ kind:"tee", design:cur.name + (cur.aud === "youth" ? " (Youth)" : ""),  // tag youth art on orders so it isn't mixed up with the adult version
+  cartAdd({ kind:"tee", design:cur.name + (cur.aud === "youth" ? " (Youth)" : "") + (selPrint === "classic" && cur.classic ? " (Classic colors)" : ""),  // tag youth art on orders so it isn't mixed up with the adult version
     style:selStyle, color:selColor, size:selSize,
             logo:FRONT_LOGOS.find(l=>l.id===selLogo).name, qty:clampQty($("#qInput").value),
             sleeve: STYLES[selStyle].long ? SLEEVE_ARTS.find(x=>x.id===selSleeve).name : "",
-            thumb: teeSVG(cur, CC_COLORS[selColor], {style:selStyle, view:"back", sleeve:selSleeve}) });
+            thumb: teeSVG(artTee(), CC_COLORS[selColor], {style:selStyle, view:"back", sleeve:selSleeve}),
+            classic: selPrint === "classic" && !!cur.classic });
   addedMsg(msg, `${cur.name} (${selSize}, ${selColor}) added to your cart.`);
 });
 $("#contactForm").addEventListener("submit", e=>{
@@ -2079,7 +2114,7 @@ function syncPayOptions(){
   document.querySelectorAll('#payBox .dlv-opt').forEach(x=>x.classList.toggle("on", x.querySelector("input").checked));
 }
 function itemPrice(it){
-  if (it.kind === "tee") return priceFor(it.size, it.style);
+  if (it.kind === "tee") return teePrice(it.size, it.style, it.classic);
   if (it.kind === "board") return BOARD_PRICE;
   return knifeEach(cartKnifeCount());            // knife bulk price counts every knife in the cart
 }
