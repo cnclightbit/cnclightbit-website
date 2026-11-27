@@ -347,7 +347,7 @@
   .design-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   .design-btn img{width:44px;height:44px;object-fit:contain;background:#737373;border-radius:6px;padding:2px}
   .tee-pick-card{display:grid;grid-template-columns:1.2fr 1fr}
-  .tee-pick-art{background:#737373;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;align-items:center;padding:18px 12px}
+  .tee-pick-art{background:#737373;display:grid;grid-template-columns:repeat(var(--cols,5),1fr);gap:4px;align-items:center;padding:18px 12px}
   .tee-pick-art svg{width:100%;height:auto;display:block}
   @media (max-width:820px){ .tee-pick-card{grid-template-columns:1fr} .tee-pick-art{grid-template-columns:repeat(3,1fr)} .tee-pick-art>:nth-child(n+4){display:none} }
   .modal-art-wrap{background:#737373;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:16px 16px 12px}
@@ -1067,6 +1067,7 @@ const TEES = [
   { name:"Bream & Cricket (Youth)",  aud:"youth", img:"designs/bream-youth.webp",   desc:"Youth design: a bream eyeing a cricket under a red-and-white bobber." },
   { name:"Crappie & Minnow (Youth)", aud:"youth", img:"designs/crappie-youth-v2.webp", desc:"Youth design: a speckled crappie going after a minnow on the hook." },
   { name:"Snapping Turtle (Youth)",  aud:"youth", img:"designs/turtle-youth.webp",  desc:"Youth design: a snapping turtle on a mossy log chasing minnows." },
+  { name:"Catfish & Cheese Ball (Youth)", aud:"youth", img:"designs/catfish-youth.webp", desc:"Youth design: a channel catfish going after a cheese ball bait over driftwood and river rocks." },
 ];
 
 /* FRONT LOGOS — printed on the front left chest (wearer's left). Add more here. */
@@ -1300,7 +1301,11 @@ $("#c-interest").innerHTML = [...PRODUCTS.map(p=>p.name), "Etched pocket knife",
 $("#c-interest").value = "Something custom";
 
 /* ---------- T-shirt card: one "Design yours" button; the back design is picked inside ---------- */
-$("#teePickArt").innerHTML = TEES.map(t=>teeSVG(t, CC_COLORS[DEFAULT_COLOR], {style:"1717", view:"back"})).join("");
+// home card: adult designs on the top row, youth on the bottom row
+{ const art = t=>teeSVG(t, CC_COLORS[DEFAULT_COLOR], {style:"1717", view:"back"});
+  const ad = TEES.filter(t=>t.aud!=="youth"), yo = TEES.filter(t=>t.aud==="youth"), cols = Math.max(ad.length, yo.length);
+  const row = list => list.map(art).join("") + "<div></div>".repeat(cols - list.length);
+  const el = $("#teePickArt"); el.style.setProperty("--cols", cols); el.innerHTML = row(ad) + row(yo); }
 $("#teeDesignCount").textContent = TEES.length;
 for (const k of STYLE_ORDER) $("#teeFrom"+k).textContent = money(styleFrom(k));
 $("#teePickSwatches").innerHTML = ["Pepper","Blue Jean","Chalky Mint","Butter","Brick","Ivory"].map(c=>`<span style="background:${CC_COLORS[c]}" title="${c}"></span>`).join("") + "<em>+ many more</em>";
