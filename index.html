@@ -1208,7 +1208,7 @@ const styleFrom = style => Math.min(...TEE_PRICES[style]);
 /* SLEEVE GRAPHICS — long sleeves only, printed down the wearer's left sleeve. Add new ones here
    (a tall, narrow transparent image works best). Keep "No sleeve graphic" last. */
 const SLEEVE_ARTS = [
-  { id:"fish-stack", aud:"adult", name:"Lake-life fish stack", img:"designs/sleeve.webp" },
+  { id:"fish-stack", aud:"adult", name:"Lake-life fish stack", img:"designs/sleeve-v2.webp", classic:{ img:"designs/sleeve.webp" } },
   { id:"happy-fish-stack", aud:"youth", name:"Happy fish stack", img:"designs/sleeve-youth.webp" },
   { id:"none",       aud:"both",  name:"No sleeve graphic" },
 ];
@@ -1247,10 +1247,12 @@ const ICONS = {
 };
 
 /* ---------- Tee artwork (recolors with chosen shirt) ---------- */
+/* classic:{img} on a sleeve or logo = its original-color art, shown when the shirt is set to Classic colors */
+const artOf = (x, classic) => (classic && x && x.classic) ? x.classic.img : (x && x.img);
 function teeSVG(tee, shirtHex, opts){
   const o = Object.assign({ style:"1717", view:"back", logo:"none", sleeve:SLEEVE_ARTS[0].id }, opts);
   const st = STYLES[o.style];
-  const sl = SLEEVE_ARTS.find(x => x.id === o.sleeve), sleeveImg = st.long && sl && sl.img ? sl.img : "";
+  const sl = SLEEVE_ARTS.find(x => x.id === o.sleeve), sleeveImg = st.long && sl && sl.img ? artOf(sl, o.classic) : "";
   const light = isLight(shirtHex);
   const stroke = light ? "rgba(0,0,0,.2)" : "rgba(255,255,255,.16)";
   const seam = light ? "rgba(0,0,0,.14)" : "rgba(255,255,255,.12)";
@@ -1269,7 +1271,7 @@ function teeSVG(tee, shirtHex, opts){
     if (st.pocket) inner += `<path d="M166 104h38v40q0 5-5 5h-28q-5 0-5-5z" fill="${shirtHex}" stroke="${stroke}" stroke-width="1.6"/><path d="M166 109h38" stroke="${seam}" stroke-width="1.2"/>`;
     const lg = FRONT_LOGOS.find(l => l.id === o.logo);
     // same size and spot on every style (on pocket styles it sits on the pocket)
-    if (lg && lg.img) inner += `<image href="${lg.img}" x="169" y="112" width="32" height="32"/>`;
+    if (lg && lg.img) inner += `<image href="${artOf(lg, o.classic)}" x="169" y="112" width="32" height="32"/>`;
     if (sleeveImg) inner += `<g transform="translate(252.5 184) rotate(-10.7)"><image href="${sleeveImg}" x="-18" y="-70" width="36" height="140" preserveAspectRatio="xMidYMid meet"/></g>`;
   }
   const cuffs = st.long ? `<path d="M19 254l30 8M281 254l-30 8" stroke="${stroke}" stroke-width="2"/>` : "";
@@ -1354,7 +1356,7 @@ function openTee(i, style){
 }
 function renderSleeves(){
   $("#mSleeveWrap").hidden = !STYLES[selStyle].long;
-  $("#mSleeves").innerHTML = SLEEVE_ARTS.filter(forAud).map(x=>`<button type="button" class="size logo-btn" role="radio" aria-checked="${x.id===selSleeve}" data-sl="${x.id}">${x.img ? `<img src="${x.img}" alt="" style="object-fit:contain">` : ""}<span>${esc(x.name)}</span></button>`).join("");
+  $("#mSleeves").innerHTML = SLEEVE_ARTS.filter(forAud).map(x=>`<button type="button" class="size logo-btn" role="radio" aria-checked="${x.id===selSleeve}" data-sl="${x.id}">${x.img ? `<img src="${artOf(x, isClassic())}" alt="" style="object-fit:contain">` : ""}<span>${esc(x.name)}</span></button>`).join("");
 }
 $("#mSleeves").addEventListener("click", e=>{
   const b=e.target.closest("[data-sl]"); if(!b) return;
@@ -1373,6 +1375,7 @@ $("#mAud").addEventListener("click", e=>{
   selPrint = "new"; showDesign(); renderDesigns(); renderPrints(); renderSizes(); updateTotal(); renderLogos(); renderSleeves(); setView("back");
 });
 let selPrint = "new";
+const isClassic = () => selPrint === "classic" && !!(cur && cur.classic);
 const artTee = () => (selPrint === "classic" && cur.classic) ? {...cur, img:cur.classic.img} : cur;
 const teePrice = (size, style, classic) => priceFor(size, style) - (classic ? CLASSIC_OFF : 0);
 function renderPrints(){
@@ -1381,12 +1384,12 @@ function renderPrints(){
   $("#mPrints").innerHTML = [["new","New vibrant colors","Printed to order"],["classic","Classic colors",`In stock · ${money(CLASSIC_OFF)} off`]]
     .map(([k,a,b])=>`<button type="button" class="size style-btn" role="radio" aria-checked="${k===selPrint}" data-pr="${k}"><b>${a}</b><small>${b}</small></button>`).join("");
   $("#mPrintNote").innerHTML = selPrint === "classic"
-    ? `<b>Limited stock, while they last.</b> Our original color print, already made, so it's ready sooner.`
+    ? `<b>Limited stock, while they last.</b> Back, sleeve and front logo in our original colors, already printed, so it's ready sooner.`
     : `Want a deal? Our original <b>Classic colors</b> print is ${money(CLASSIC_OFF)} off while they last.`;
 }
 $("#mPrints").addEventListener("click", e=>{
   const b=e.target.closest("[data-pr]"); if(!b) return;
-  selPrint=b.dataset.pr; renderPrints(); renderSizes(); updateTotal(); setView("back");
+  selPrint=b.dataset.pr; renderPrints(); renderSleeves(); renderLogos(); renderSizes(); updateTotal(); setView("back");
 });
 function showDesign(){ $("#mTitle").textContent = cur.name; $("#mDesc").textContent = cur.desc; }
 function renderDesigns(){
@@ -1394,14 +1397,14 @@ function renderDesigns(){
 }
 $("#mDesigns").addEventListener("click", e=>{
   const b=e.target.closest("[data-d]"); if(!b) return;
-  cur = TEES[+b.dataset.d]; selPrint = "new"; showDesign(); renderDesigns(); renderPrints(); renderSizes(); updateTotal(); setView("back");
+  cur = TEES[+b.dataset.d]; selPrint = "new"; showDesign(); renderDesigns(); renderPrints(); renderSleeves(); renderLogos(); renderSizes(); updateTotal(); setView("back");
 });
 function renderStyles(){
   $("#mStyles").innerHTML = STYLE_ORDER.map(k=>[k,STYLES[k]]).map(([k,s])=>`<button type="button" class="size style-btn" role="radio" aria-checked="${k===selStyle}" data-st="${k}"><b>${s.label}</b><small>${s.name} · from ${money(styleFrom(k))}</small></button>`).join("");
   $("#mTag").textContent = `Comfort Colors ${STYLES[selStyle].label} · ${STYLES[selStyle].name}`;
 }
 function renderLogos(){
-  const btn = l=>`<button type="button" class="size logo-btn" role="radio" aria-checked="${l.id===selLogo}" data-lg="${l.id}">${l.img ? `<img src="${l.img}" alt="">` : ""}<span>${esc(l.name)}</span></button>`;
+  const btn = l=>`<button type="button" class="size logo-btn" role="radio" aria-checked="${l.id===selLogo}" data-lg="${l.id}">${l.img ? `<img src="${artOf(l, isClassic())}" alt="">` : ""}<span>${esc(l.name)}</span></button>`;
   $("#mLogos").innerHTML = LOGO_GROUPS.map(([g,label])=>{
     const list = FRONT_LOGOS.filter(l=>l.group===g && forAud(l));
     return list.length ? `<div class="logo-group">${esc(label)}</div>${list.map(btn).join("")}` : "";
@@ -1494,7 +1497,7 @@ function closeTee(){
   if(lastFocus) lastFocus.focus();
 }
 function updateArt(){
-  $("#mArt").innerHTML = teeSVG(artTee(), CC_COLORS[selColor], {style:selStyle, view:selView, logo:selLogo, sleeve:selSleeve});
+  $("#mArt").innerHTML = teeSVG(artTee(), CC_COLORS[selColor], {style:selStyle, view:selView, logo:selLogo, sleeve:selSleeve, classic:isClassic()});
   $("#mColorName").textContent = selColor;
 }
 $("#mClose").addEventListener("click", closeTee);
@@ -1622,7 +1625,7 @@ $("#teeForm").addEventListener("submit", e=>{
     style:selStyle, color:selColor, size:selSize,
             logo:FRONT_LOGOS.find(l=>l.id===selLogo).name, qty:clampQty($("#qInput").value),
             sleeve: STYLES[selStyle].long ? SLEEVE_ARTS.find(x=>x.id===selSleeve).name : "",
-            thumb: teeSVG(artTee(), CC_COLORS[selColor], {style:selStyle, view:"back", sleeve:selSleeve}),
+            thumb: teeSVG(artTee(), CC_COLORS[selColor], {style:selStyle, view:"back", sleeve:selSleeve, classic:isClassic()}),
             classic: selPrint === "classic" && !!cur.classic });
   addedMsg(msg, `${cur.name} (${selSize}, ${selColor}) added to your cart.`);
 });
