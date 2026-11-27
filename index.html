@@ -339,6 +339,8 @@
   .swatches-mini em{font-style:normal;font-size:.78rem;color:var(--muted);margin-left:4px}
   .style-grid{display:grid;grid-template-columns:1fr 1fr}
   .style-btn b{font-family:Oswald;font-size:1.05rem;font-weight:600}
+  .logo-group{flex-basis:100%;width:100%;grid-column:1 / -1;font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:700;margin:6px 0 -2px}
+  .logo-group:first-child{margin-top:0}
   .logo-btn{display:flex;align-items:center;gap:10px;text-align:left;padding:8px 12px}
   .logo-btn img{width:36px;height:36px}
   .logo-btn span{font-size:.85rem}
@@ -1063,14 +1065,16 @@ const TEES = [
 ];
 
 /* FRONT LOGOS — printed on the front left chest (wearer's left). Add more here. */
+/* group: "cedar" = Cedar Creek Estates logos, "general" = for everyone. They show under those two headings. */
+const LOGO_GROUPS = [ ["cedar","Cedar Creek Estates"], ["general","General"] ];
 const FRONT_LOGOS = [
-  { id:"cedar-creek", aud:"adult", name:"Cedar Creek", img:"designs/cedar-creek.webp" },
-  { id:"fresh-water", aud:"adult", name:"Fresh Water", img:"designs/fresh-water.webp" },
-  { id:"fresh-water-fishing", aud:"adult", name:"Fresh Water Fishing", img:"designs/fresh-water-fishing.webp" },
-  { id:"cedar-creek-fish-camp", aud:"youth", name:"Cedar Creek Fish Camp", img:"designs/cedar-creek-fish-camp-youth.webp" },
-  { id:"cedar-creek-fish-camp-boy",  aud:"youth", name:"Cedar Creek Fish Camp (Boy)",  img:"designs/cedar-creek-fish-camp-boy.webp" },
-  { id:"cedar-creek-fish-camp-girl", aud:"youth", name:"Cedar Creek Fish Camp (Girl)", img:"designs/cedar-creek-fish-camp-girl.webp" },
-  { id:"none", aud:"both", name:"No front logo" },
+  { id:"cedar-creek", group:"cedar", aud:"adult", name:"Cedar Creek", img:"designs/cedar-creek.webp" },
+  { id:"cedar-creek-fish-camp", group:"cedar", aud:"youth", name:"Cedar Creek Fish Camp", img:"designs/cedar-creek-fish-camp-youth.webp" },
+  { id:"cedar-creek-fish-camp-boy",  group:"cedar", aud:"youth", name:"Cedar Creek Fish Camp (Boy)",  img:"designs/cedar-creek-fish-camp-boy.webp" },
+  { id:"cedar-creek-fish-camp-girl", group:"cedar", aud:"youth", name:"Cedar Creek Fish Camp (Girl)", img:"designs/cedar-creek-fish-camp-girl.webp" },
+  { id:"fresh-water", group:"general", aud:"adult", name:"Fresh Water", img:"designs/fresh-water.webp" },
+  { id:"fresh-water-fishing", group:"general", aud:"adult", name:"Fresh Water Fishing", img:"designs/fresh-water-fishing.webp" },
+  { id:"none", group:"general", aud:"both", name:"No front logo" },
 ];
 
 /* COMFORT COLORS SHIRT STYLES — colors from the S&S Activewear catalog (Nov 2026) */
@@ -1350,7 +1354,11 @@ function renderStyles(){
   $("#mTag").textContent = `Comfort Colors ${STYLES[selStyle].label} · ${STYLES[selStyle].name}`;
 }
 function renderLogos(){
-  $("#mLogos").innerHTML = FRONT_LOGOS.filter(forAud).map(l=>`<button type="button" class="size logo-btn" role="radio" aria-checked="${l.id===selLogo}" data-lg="${l.id}">${l.img ? `<img src="${l.img}" alt="">` : ""}<span>${esc(l.name)}</span></button>`).join("");
+  const btn = l=>`<button type="button" class="size logo-btn" role="radio" aria-checked="${l.id===selLogo}" data-lg="${l.id}">${l.img ? `<img src="${l.img}" alt="">` : ""}<span>${esc(l.name)}</span></button>`;
+  $("#mLogos").innerHTML = LOGO_GROUPS.map(([g,label])=>{
+    const list = FRONT_LOGOS.filter(l=>l.group===g && forAud(l));
+    return list.length ? `<div class="logo-group">${esc(label)}</div>${list.map(btn).join("")}` : "";
+  }).join("");
 }
 function renderSwatches(){
   const list = STYLES[selStyle].colors;
